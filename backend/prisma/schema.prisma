@@ -1,0 +1,72 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model BloodGroup {
+  id         Int       @id @default(autoincrement())
+  bloodGroup String    @unique @map("blood_group") @db.VarChar(5)
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  createdBy  String    @default("admin") @map("created_by") @db.VarChar(50)
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by") @db.VarChar(50)
+  members    Member[]
+
+  @@map("blood_groups")
+}
+
+model Member {
+  id                           BigInt      @id @default(autoincrement())
+  memberId                     String      @unique @map("member_id") @db.VarChar(20)
+  registrationNo               String      @map("registration_no") @db.VarChar(50)
+  fullName                     String      @map("full_name") @db.VarChar(100)
+  designation                  String      @db.VarChar(100)
+  bloodGroupId                 Int         @map("blood_group_id")
+  bloodGroup                   BloodGroup  @relation(fields: [bloodGroupId], references: [id])
+  contactNumber                String      @map("contact_number") @db.VarChar(15)
+  emailId                      String      @map("email_id") @db.VarChar(100)
+  dateOfJoining                DateTime    @map("date_of_joining") @db.Date
+  emergencyContactName         String      @map("emergency_contact_name") @db.VarChar(100)
+  emergencyContactRelationship String      @map("emergency_contact_relationship") @db.VarChar(50)
+  emergencyContactNumber       String      @map("emergency_contact_number") @db.VarChar(15)
+  photoPath                    String      @map("photo_path") @db.VarChar(255)
+  issueDate                    DateTime    @map("issue_date") @db.Date
+  expiryDate                   DateTime    @map("expiry_date") @db.Date
+  memberStatus                 String      @default("Active") @map("member_status") @db.VarChar(20)
+  authorisedName               String      @map("authorised_name") @db.VarChar(100)
+  authorisedDesignation        String      @map("authorised_designation") @db.VarChar(100)
+  remarks                      String?     @db.Text
+  createdAt                    DateTime    @default(now()) @map("created_at")
+  updatedAt                    DateTime    @updatedAt @map("updated_at")
+  createdBy                    String      @default("admin") @map("created_by") @db.VarChar(50)
+  deletedAt                    DateTime?   @map("deleted_at")
+  deletedBy                    String?     @map("deleted_by") @db.VarChar(50)
+
+  @@index([deletedAt, id(sort: Desc)])
+  @@map("members")
+}
+
+model CardSettings {
+  id                           Int      @id @default(1)
+  trustName                    String   @default("FRIENDS OF EDUCATION") @map("trust_name")
+  trustSubtitle                String   @default("CHARITABLE TRUST") @map("trust_subtitle")
+  registrationNo               String   @default("Reg. E-0040751(GBR)") @map("registration_no")
+  logoUrl                      String   @default("") @map("logo_url")
+  signatureUrl                 String   @default("") @map("signature_url")
+  websiteUrl                   String   @default("www.friendsofeducation.in") @map("website_url")
+  aboutUsText                  String   @default("Friends Of Education Charitable Trust is committed to supporting education and empowering lives for a better tomorrow.") @map("about_us_text") @db.Text
+  validityClause               String   @default("Official use only by authorised members of the trust.") @map("validity_clause") @db.Text
+  returnNote                   String   @default("If found, please return this card to the Friends Of Education Charitable Trust at the above address or contact number") @map("return_note") @db.Text
+  defaultEmergencyContact      String   @default("+91 9136643813") @map("default_emergency_contact")
+  defaultAuthorisedName        String   @default("Mr. Shailesh Pandey") @map("default_authorised_name")
+  defaultAuthorisedDesignation String   @default("Founder and President") @map("default_authorised_designation")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
+
+  @@map("card_settings")
+}

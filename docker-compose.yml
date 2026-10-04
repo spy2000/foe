@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: foe_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-foe_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foe_secret_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-foe_db}
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foe_admin -d foe_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
