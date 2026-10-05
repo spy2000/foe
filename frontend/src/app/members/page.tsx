@@ -14,6 +14,7 @@ import {
   Search,
   CheckCircle,
   Pencil,
+  Edit2,
   X,
 } from "lucide-react";
 import { api, Member } from "@/lib/api";
@@ -314,39 +315,37 @@ export default function MembersListPage() {
 
         <Link
           href="/members/create"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F15A24] to-[#EA580C] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#F15A24] text-white rounded-lg font-semibold shadow-sm hover:bg-[#d94815] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
-          <UserPlus className="h-4 w-4" />
-          <span>Register New Member</span>
+          <UserPlus className="w-4 h-4 shrink-0" />
+          <span className="whitespace-nowrap">Register New Member</span>
         </Link>
       </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Active vs Deleted Tabs */}
-        <div className="flex items-center gap-1 rounded-2xl bg-gray-200/60 p-1">
+        <div className="flex w-full sm:w-auto p-1 bg-gray-100 rounded-lg">
           <button
             onClick={() => setActiveTab("active")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 text-center py-2 px-4 text-sm font-medium rounded-md transition-all cursor-pointer ${
               activeTab === "active"
                 ? "bg-white text-orange-600 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            <CheckCircle className="h-3.5 w-3.5" />
-            <span>Active Members</span>
+            Active
           </button>
 
           <button
             onClick={() => setActiveTab("deleted")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 text-center py-2 px-4 text-sm font-medium rounded-md transition-all cursor-pointer ${
               activeTab === "deleted"
                 ? "bg-white text-red-600 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            <ShieldAlert className="h-3.5 w-3.5" />
-            <span>Deleted / Archival Records</span>
+            Archived
           </button>
         </div>
 
@@ -384,12 +383,13 @@ export default function MembersListPage() {
             </p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
-            <table className="w-full min-w-[1020px] table-auto divide-y divide-gray-200 text-left text-xs">
-              <thead className="border-b border-gray-100 bg-gray-50/75 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                <tr>
+          <div className="w-full overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-sm">
+            {/* Force min-width to prevent column overlapping */}
+            <table className="w-full min-w-[950px] table-fixed text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50/50">
                   {/* Custom Checkbox Column */}
-                  <th className="w-[50px] min-w-[50px] px-4 py-3 text-center">
+                  <th className="w-[48px] px-4 py-3 text-center whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -398,14 +398,14 @@ export default function MembersListPage() {
                       aria-label="Select all members on this page"
                     />
                   </th>
-                  <th className="w-[80px] min-w-[80px] px-4 py-3">Photo</th>
-                  <th className="w-[110px] min-w-[110px] px-4 py-3 whitespace-nowrap">Member ID</th>
-                  <th className="min-w-[180px] px-4 py-3">Full Name</th>
-                  <th className="min-w-[160px] px-4 py-3">Designation</th>
-                  <th className="w-[130px] min-w-[130px] px-4 py-3 whitespace-nowrap">Contact</th>
-                  <th className="w-[100px] min-w-[100px] px-4 py-3 whitespace-nowrap">Blood Group</th>
-                  <th className="w-[100px] min-w-[100px] px-4 py-3 whitespace-nowrap">Status</th>
-                  <th className="w-[180px] min-w-[180px] px-4 py-3 text-right whitespace-nowrap">Actions</th>
+                  <th className="w-[70px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Photo</th>
+                  <th className="w-[100px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Member ID</th>
+                  <th className="w-[180px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Full Name</th>
+                  <th className="w-[160px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Designation</th>
+                  <th className="w-[140px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Contact</th>
+                  <th className="w-[110px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Blood Group</th>
+                  <th className="w-[110px] px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                  <th className="w-[140px] px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium text-gray-800">
@@ -419,7 +419,7 @@ export default function MembersListPage() {
                     }`}
                   >
                     {/* Checkbox column */}
-                    <td className="w-[50px] min-w-[50px] px-4 py-3 text-center">
+                    <td className="w-[48px] px-4 py-3 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(member.id)}
@@ -430,41 +430,47 @@ export default function MembersListPage() {
                     </td>
 
                     {/* Photo thumbnail */}
-                    <td className="w-[80px] min-w-[80px] px-4 py-3">
+                    <td className="w-[70px] px-4 py-3">
                       <MemberAvatar src={member.photoPath} alt={member.fullName} />
                     </td>
 
                     {/* Member ID */}
-                    <td className="w-[110px] min-w-[110px] px-4 py-3 font-mono font-bold text-orange-600 whitespace-nowrap">
+                    <td className="w-[100px] px-4 py-3 font-mono font-bold text-orange-600 whitespace-nowrap">
                       {member.memberId}
                     </td>
 
                     {/* Full Name */}
-                    <td className="min-w-[180px] px-4 py-3 font-bold text-gray-900 truncate" title={member.fullName}>
-                      {member.fullName}
+                    <td className="w-[180px] px-4 py-3 font-bold text-gray-900 truncate">
+                      <span className="truncate block" title={member.fullName}>
+                        {member.fullName}
+                      </span>
                     </td>
 
                     {/* Designation */}
-                    <td className="min-w-[160px] px-4 py-3 text-gray-600 truncate" title={member.designation}>
-                      {member.designation}
+                    <td className="w-[160px] px-4 py-3 text-gray-600 truncate">
+                      <span className="truncate block" title={member.designation}>
+                        {member.designation}
+                      </span>
                     </td>
 
                     {/* Contact */}
-                    <td className="w-[130px] min-w-[130px] px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {member.contactNumber}
+                    <td className="w-[140px] px-4 py-3 text-gray-600 whitespace-nowrap truncate">
+                      <span className="whitespace-nowrap truncate block">
+                        {member.contactNumber}
+                      </span>
                     </td>
 
                     {/* Blood Group */}
-                    <td className="w-[100px] min-w-[100px] px-4 py-3 whitespace-nowrap">
-                      <span className="inline-flex items-center rounded-lg bg-red-50 px-2 py-0.5 font-bold text-red-700">
+                    <td className="w-[110px] px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center rounded-lg bg-red-50 px-2.5 py-1 font-bold text-red-700 text-xs">
                         {member.bloodGroup?.bloodGroup || "—"}
                       </span>
                     </td>
 
                     {/* Status */}
-                    <td className="w-[100px] min-w-[100px] px-4 py-3 whitespace-nowrap">
+                    <td className="w-[110px] px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
                           member.deletedAt
                             ? "bg-gray-100 text-gray-600"
                             : member.memberStatus === "Active"
@@ -486,94 +492,133 @@ export default function MembersListPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="w-[180px] min-w-[180px] px-4 py-3 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        {/* Edit Member */}
-                        {activeTab === "active" && (
-                          <Link
-                            href={`/members/${member.id}/edit`}
-                            className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors"
-                            title="Edit Member"
-                          >
-                            <Pencil className="h-3.5 w-3.5 text-[#F15A24]" />
-                            <span className="hidden sm:inline">Edit</span>
-                          </Link>
-                        )}
+                    <td className="w-[140px] px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        {activeTab === "deleted" ? (
+                          <>
+                            {/* Restore Button */}
+                            <div className="relative group inline-block">
+                              <button
+                                onClick={() =>
+                                  setModalState({
+                                    isOpen: true,
+                                    type: "single-restore",
+                                    id: member.id,
+                                    name: member.fullName,
+                                  })
+                                }
+                                disabled={actionLoading === member.id}
+                                className="flex items-center justify-center w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {actionLoading === member.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RotateCcw className="w-4 h-4" />
+                                )}
+                              </button>
+                              {/* Custom Hover-Only Tooltip (Hidden on touch devices) */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity [@media(hover:hover)]:group-hover:block">
+                                <div className="bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                  Restore Member
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
 
-                        {/* View / Download ID */}
-                        <Link
-                          href={`/members/${member.id}/preview`}
-                          className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-2.5 py-1.5 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors"
-                          title="View / Download ID Card"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">View ID</span>
-                        </Link>
-
-                        {/* Soft Delete or Restore */}
-                        {activeTab === "active" ? (
-                          <button
-                            onClick={() =>
-                              setModalState({
-                                isOpen: true,
-                                type: "single-soft-delete",
-                                id: member.id,
-                                name: member.fullName,
-                              })
-                            }
-                            disabled={actionLoading === member.id}
-                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                            title="Archive Member"
-                          >
-                            {actionLoading === member.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
+                            {/* Permanent Delete Button */}
+                            <div className="relative group inline-block">
+                              <button
+                                onClick={() =>
+                                  setModalState({
+                                    isOpen: true,
+                                    type: "single-permanent-delete",
+                                    id: member.id,
+                                    name: member.fullName,
+                                  })
+                                }
+                                disabled={actionLoading === member.id}
+                                className="flex items-center justify-center w-8 h-8 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {actionLoading === member.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                              {/* Custom Hover-Only Tooltip (Hidden on touch devices) */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity [@media(hover:hover)]:group-hover:block">
+                                <div className="bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                  Delete Permanently
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
+                          </>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() =>
-                                setModalState({
-                                  isOpen: true,
-                                  type: "single-restore",
-                                  id: member.id,
-                                  name: member.fullName,
-                                })
-                              }
-                              disabled={actionLoading === member.id}
-                              className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
-                              title="Restore Member"
-                            >
-                              {actionLoading === member.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <RotateCcw className="h-3.5 w-3.5" />
-                              )}
-                              <span>Restore</span>
-                            </button>
-                            <button
-                              onClick={() =>
-                                setModalState({
-                                  isOpen: true,
-                                  type: "single-permanent-delete",
-                                  id: member.id,
-                                  name: member.fullName,
-                                })
-                              }
-                              disabled={actionLoading === member.id}
-                              className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
-                              title="Delete Permanently"
-                            >
-                              {actionLoading === member.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                              )}
-                              <span>Delete Permanently</span>
-                            </button>
-                          </div>
+                          <>
+                            {/* Edit Button */}
+                            <div className="relative group inline-block">
+                              <Link
+                                href={`/members/${member.id}/edit`}
+                                className="flex items-center justify-center w-8 h-8 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors cursor-pointer"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Link>
+                              {/* Custom Hover-Only Tooltip (Hidden on touch devices) */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity [@media(hover:hover)]:group-hover:block">
+                                <div className="bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                  Edit Member
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
+
+                            {/* View / Download ID */}
+                            <div className="relative group inline-block">
+                              <Link
+                                href={`/members/${member.id}/preview`}
+                                className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                              {/* Custom Hover-Only Tooltip (Hidden on touch devices) */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity [@media(hover:hover)]:group-hover:block">
+                                <div className="bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                  View ID Card
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
+
+                            {/* Archive (Soft Delete) */}
+                            <div className="relative group inline-block">
+                              <button
+                                onClick={() =>
+                                  setModalState({
+                                    isOpen: true,
+                                    type: "single-soft-delete",
+                                    id: member.id,
+                                    name: member.fullName,
+                                  })
+                                }
+                                disabled={actionLoading === member.id}
+                                className="flex items-center justify-center w-8 h-8 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {actionLoading === member.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                              {/* Custom Hover-Only Tooltip (Hidden on touch devices) */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity [@media(hover:hover)]:group-hover:block">
+                                <div className="bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                  Archive Member
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
+                          </>
                         )}
                       </div>
                     </td>

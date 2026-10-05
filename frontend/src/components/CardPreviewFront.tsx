@@ -114,17 +114,26 @@ export default function CardPreviewFront({
       />
 
       {/* Main Title */}
-      <h1 className="absolute top-[62px] w-full text-center text-[19px] text-white font-black tracking-wide uppercase leading-tight z-10 drop-shadow-sm">
+      <h1
+        style={{ color: "#ffffff" }}
+        className="absolute top-[62px] w-full text-center text-[19px] text-white font-black tracking-wide uppercase leading-tight z-10 drop-shadow-sm"
+      >
         {settings.trustName || "FRIENDS OF EDUCATION"}
       </h1>
 
       {/* Subtitle */}
-      <p className="absolute top-[88px] w-full text-center text-[11px] text-white font-bold tracking-widest uppercase z-10 leading-none">
+      <p
+        style={{ color: "#ffffff" }}
+        className="absolute top-[88px] w-full text-center text-[11px] text-white font-bold tracking-widest uppercase z-10 leading-none"
+      >
         {settings.trustSubtitle || "CHARITABLE TRUST"}
       </p>
 
       {/* Registration Pill */}
-      <div className="absolute top-[108px] left-1/2 -translate-x-1/2 bg-[#3B1B0B] text-white text-[10.5px] font-bold px-4 py-0.5 rounded-full whitespace-nowrap shadow-sm z-10">
+      <div
+        style={{ backgroundColor: "#3B1B0B", color: "#ffffff" }}
+        className="absolute top-[108px] left-1/2 -translate-x-1/2 bg-[#3B1B0B] text-white text-[10.5px] font-bold px-4 py-0.5 rounded-full whitespace-nowrap shadow-sm z-10"
+      >
         {settings.registrationNo || "Reg. E-0040751(GBR)"}
       </div>
 
@@ -144,18 +153,27 @@ export default function CardPreviewFront({
 
       {/* C. Name, Designation & Details Grid */}
       {/* Member Name */}
-      <h2 className="absolute top-[265px] w-full text-center text-[21px] font-black text-[#222222] capitalize leading-none z-10 tracking-tight">
+      <h2
+        style={{ color: "#222222" }}
+        className="absolute top-[265px] w-full text-center text-[21px] font-black text-[#222222] capitalize leading-none z-10 tracking-tight"
+      >
         {toTitleCase(member.fullName || "Member Full Name")}
       </h2>
 
       {/* Designation */}
-      <p className="absolute top-[290px] w-full text-center text-[12px] font-bold text-[#555555] leading-tight z-10">
+      <p
+        style={{ color: "#555555" }}
+        className="absolute top-[290px] w-full text-center text-[12px] font-bold text-[#555555] leading-tight z-10"
+      >
         {member.designation || "Designation"}
       </p>
 
       {/* Details Grid */}
       <div className="absolute top-[340px] left-[30px] right-[30px] z-10">
-        <div className="grid grid-cols-[85px_15px_1fr] gap-y-1.5 text-[12px] font-bold text-[#222222]">
+        <div
+          style={{ color: "#222222" }}
+          className="grid grid-cols-[85px_15px_1fr] gap-y-1.5 text-[12px] font-bold text-[#222222]"
+        >
           <div>ID No.</div>
           <div className="text-center">:</div>
           <div className="truncate">{member.memberId || "0001"}</div>
@@ -187,13 +205,19 @@ export default function CardPreviewFront({
         ) : (
           <div className="h-[35px]" />
         )}
-        <p className="text-[10px] font-bold text-[#222222] mt-0.5 whitespace-nowrap">
+        <p
+          style={{ color: "#222222" }}
+          className="text-[10px] font-bold text-[#222222] mt-0.5 whitespace-nowrap"
+        >
           Authorised signature
         </p>
       </div>
 
       {/* Footer URL Banner */}
-      <div className="absolute bottom-0 left-0 w-full h-[35px] bg-[#F15A24] rounded-b-[20px] flex items-center justify-center text-[12px] font-bold text-white tracking-wide z-10">
+      <div
+        style={{ backgroundColor: "#F15A24", color: "#ffffff" }}
+        className="absolute bottom-0 left-0 w-full h-[35px] bg-[#F15A24] rounded-b-[20px] flex items-center justify-center text-[12px] font-bold text-white tracking-wide z-10"
+      >
         <span>{settings.websiteUrl || "www.friendsofeducation.in"}</span>
       </div>
     </div>

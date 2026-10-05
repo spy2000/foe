@@ -1,5 +1,9 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const rawBaseURL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
+export const API_BASE_URL = rawBaseURL.endsWith("/api")
+  ? rawBaseURL
+  : `${rawBaseURL}/api`;
 
 export interface BloodGroup {
   id: number;
@@ -66,12 +70,23 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+    
+    const isMutating =
+      options?.method === "POST" ||
+      options?.method === "PUT" ||
+      options?.method === "PATCH";
+
+    const body = options?.body !== undefined ? options.body : (isMutating ? JSON.stringify({}) : undefined);
+
+    const headers: Record<string, string> = {
+      ...(isMutating || body ? { "Content-Type": "application/json" } : {}),
+      ...(options?.headers as Record<string, string>),
+    };
+
     const res = await fetch(url, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
+      headers,
+      body,
     });
 
     if (!res.ok) {
@@ -150,6 +165,7 @@ class ApiClient {
   async restoreMember(id: string): Promise<{ success: boolean; data: Member }> {
     return this.request(`/members/${id}/restore`, {
       method: "PATCH",
+      body: JSON.stringify({}),
     });
   }
 

@@ -15,6 +15,31 @@ interface PDFExporterProps {
   fileName?: string;
   memberId?: string;
   memberName?: string;
+  buttonClassName?: string;
+}
+
+// Helper to fetch image as base64 via proxy or direct fetch
+async function getBase64Image(url: string): Promise<string> {
+  if (!url) return "";
+  if (url.startsWith("data:")) return url;
+
+  const targetUrl = url.startsWith("http")
+    ? api.getProxyImageUrl(url)
+    : url;
+
+  try {
+    const res = await fetch(targetUrl);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string) || url);
+      reader.onerror = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn("Failed fetching image as base64:", url, err);
+    return url;
+  }
 }
 
 export default function PDFExporter({
@@ -22,6 +47,7 @@ export default function PDFExporter({
   fileName,
   memberId,
   memberName,
+  buttonClassName,
 }: PDFExporterProps) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -40,38 +66,48 @@ export default function PDFExporter({
     showToast("Generating high-resolution ID Card PDF...", "success");
 
     try {
-      // Preload and convert all images in the container to base64 through proxy to avoid CORS taint
+      // 1. Preload and convert all images in the container to base64 through proxy to avoid CORS taint
       const images = Array.from(container.querySelectorAll("img"));
       await Promise.all(
         images.map(async (img) => {
-          const currentSrc = img.src;
+          const currentSrc = img.getAttribute("src") || img.src;
           if (currentSrc && !currentSrc.startsWith("data:")) {
-            try {
-              const b64 = await convertImageToBase64(currentSrc, (url) =>
-                api.getProxyImageUrl(url)
-              );
-              if (b64) {
-                img.setAttribute("src", b64);
-              }
-            } catch (err) {
-              console.warn("Failed proxying image for canvas:", currentSrc, err);
+            const b64 = await getBase64Image(currentSrc);
+            if (b64 && b64.startsWith("data:")) {
+              img.src = b64;
             }
           }
         })
       );
 
-      // Short wait for any DOM repaint
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // 2. Ensure all images are fully loaded and decoded in the DOM
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete && img.naturalHeight !== 0) {
+                resolve();
+              } else {
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                setTimeout(resolve, 1500); // 1.5s safety timeout
+              }
+            })
+        )
+      );
 
-      // Render container with scale: 4 for crisp 300+ DPI clarity
+      // Short wait for repaint
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Render container with scale: 3 for crisp 300+ DPI clarity
       const canvas = await html2canvas(container, {
-        scale: 4,
+        scale: 3,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
         onclone: (clonedDoc) => {
-          // Inject standard Web Safe Fonts (Arial/Impact) to prevent font-rendering dropouts
+          // 1. Inject standard Web Safe Fonts (Arial/Impact) to prevent font-rendering dropouts
           const styleSheet = clonedDoc.createElement("style");
           styleSheet.innerHTML = `
             * {
@@ -85,31 +121,77 @@ export default function PDFExporter({
           `;
           clonedDoc.head.appendChild(styleSheet);
 
-          // Replace unsupported color functions like oklab/oklch with standard hex/RGB
-          const elements = clonedDoc.querySelectorAll("*");
-          elements.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            if (!htmlEl || !htmlEl.style) return;
-            const style = window.getComputedStyle(htmlEl);
-            if (
-              style.color &&
-              (style.color.includes("oklab") || style.color.includes("oklch"))
-            ) {
-              htmlEl.style.color = "#222222";
+          // 2. Fallback color maps
+          const brandOrange = "#F15A24";
+          const brandBrown = "#3B1B0B";
+          const textDark = "#222222";
+          const textMuted = "#555555";
+          const borderLight = "#e5e7eb";
+
+          // Helper to check unsupported color function (lab, oklab, lch, oklch)
+          const isUnsupportedColor = (val: string | null | undefined): boolean => {
+            if (!val) return false;
+            const str = String(val).toLowerCase();
+            return str.includes("lab") || str.includes("lch");
+          };
+
+          // 3. Target all elements in the cloned document
+          const elements = clonedDoc.getElementsByTagName("*");
+          for (let i = 0; i < elements.length; i++) {
+            const el = elements[i] as HTMLElement;
+            if (!el || !el.style) continue;
+
+            const computedStyle = window.getComputedStyle(el);
+            const tag = el.tagName.toLowerCase();
+
+            // Sanitize background colors
+            if (isUnsupportedColor(computedStyle.backgroundColor)) {
+              if (tag === "svg" || tag === "path" || tag === "rect" || tag === "circle") continue;
+              const className = typeof el.className === "string" ? el.className : "";
+              if (className.includes("F15A24") || className.includes("orange")) {
+                el.style.backgroundColor = brandOrange;
+              } else if (className.includes("3B1B0B") || className.includes("brown")) {
+                el.style.backgroundColor = brandBrown;
+              } else {
+                el.style.backgroundColor = "#ffffff";
+              }
             }
-            if (
-              style.backgroundColor &&
-              (style.backgroundColor.includes("oklab") ||
-                style.backgroundColor.includes("oklch"))
-            ) {
-              htmlEl.style.backgroundColor = "#F15A24";
+
+            // Sanitize text colors
+            if (isUnsupportedColor(computedStyle.color)) {
+              const className = typeof el.className === "string" ? el.className : "";
+              if (className.includes("white")) {
+                el.style.color = "#ffffff";
+              } else if (className.includes("F15A24") || className.includes("orange")) {
+                el.style.color = brandOrange;
+              } else if (className.includes("555555") || className.includes("gray-500") || className.includes("gray-600")) {
+                el.style.color = textMuted;
+              } else {
+                el.style.color = textDark;
+              }
             }
-            if (
-              style.borderColor &&
-              (style.borderColor.includes("oklab") ||
-                style.borderColor.includes("oklch"))
-            ) {
-              htmlEl.style.borderColor = "#e5e7eb";
+
+            // Sanitize borders
+            if (isUnsupportedColor(computedStyle.borderColor)) {
+              el.style.borderColor = borderLight;
+            }
+
+            // Sanitize outlines
+            if (isUnsupportedColor(computedStyle.outlineColor)) {
+              el.style.outlineColor = "transparent";
+            }
+          }
+
+          // 4. Hard-override SVG fills and strokes inside the clone to prevent lab() crashes inside paths
+          const svgs = clonedDoc.querySelectorAll("svg path, svg rect, svg circle, svg polygon, svg line");
+          svgs.forEach((path: Element) => {
+            const fill = path.getAttribute("fill");
+            if (isUnsupportedColor(fill)) {
+              path.setAttribute("fill", brandBrown);
+            }
+            const stroke = path.getAttribute("stroke");
+            if (isUnsupportedColor(stroke)) {
+              path.setAttribute("stroke", brandOrange);
             }
           });
         },
@@ -143,18 +225,21 @@ export default function PDFExporter({
     }
   };
 
+  const defaultButtonClass =
+    "inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#F15A24] to-[#EA580C] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer";
+
   return (
     <button
       onClick={handleDownloadPDF}
       disabled={isExporting}
-      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#F15A24] to-[#EA580C] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+      className={buttonClassName || defaultButtonClass}
     >
       {isExporting ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
       ) : (
-        <Download className="h-5 w-5" />
+        <Download className="w-4 h-4 shrink-0" />
       )}
-      <span>{isExporting ? "Rendering PDF..." : "Download ID Card (PDF)"}</span>
+      <span>{isExporting ? "Rendering PDF..." : "Download PDF"}</span>
     </button>
   );
 }

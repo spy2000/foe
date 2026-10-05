@@ -22,8 +22,8 @@ export async function getNextMemberId(): Promise<string> {
     }
   }
 
-  // 3-digit zero-padded sequential ID: 001, 002, 003...
-  return String(nextNum).padStart(3, "0");
+  // 4-digit zero-padded sequential ID: 0001, 0002, 0003...
+  return String(nextNum).padStart(4, "0");
 }
 
 export async function getNextMemberIdHandler(

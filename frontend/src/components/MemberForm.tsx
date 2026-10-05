@@ -25,7 +25,7 @@ import {
 import { api, BloodGroup, CardSettings, Member } from "@/lib/api";
 import { showToast } from "@/components/Toast";
 import { toInputDate } from "@/lib/utils";
-import { memberFormSchema, type MemberFormValues } from "@/lib/schemas";
+import { memberFormSchema, getMemberFormSchema, type MemberFormValues } from "@/lib/schemas";
 import DatePickerWithYearSelect from "@/components/DatePickerWithYearSelect";
 import CustomSelect, { SelectOption } from "@/components/CustomSelect";
 import StatusSelect from "@/components/StatusSelect";
@@ -70,6 +70,10 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
 
   const isEdit = mode === "edit";
 
+  const today = new Date();
+  const threeMonthsFromNow = new Date(today);
+  threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+
   const {
     register,
     handleSubmit,
@@ -79,7 +83,7 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
     formState: { errors, isDirty, isValid },
   } = useForm<MemberFormValues>({
     mode: "onChange",
-    resolver: zodResolver(memberFormSchema),
+    resolver: zodResolver(getMemberFormSchema(isEdit)),
     defaultValues: isEdit && initialMember
       ? {
           registrationNo: initialMember.registrationNo || "",
@@ -93,8 +97,8 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
           emergencyContactRelationship: initialMember.emergencyContactRelationship || "",
           emergencyContactNumber: initialMember.emergencyContactNumber || "",
           photoPath: initialMember.photoPath || "",
-          issueDate: toInputDate(initialMember.issueDate) || toInputDate(new Date()),
-          expiryDate: toInputDate(initialMember.expiryDate) || toInputDate(new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000)),
+          issueDate: toInputDate(initialMember.issueDate) || today.toISOString().split("T")[0],
+          expiryDate: toInputDate(initialMember.expiryDate) || threeMonthsFromNow.toISOString().split("T")[0],
           memberStatus: initialMember.memberStatus || "Active",
           authorisedName: initialMember.authorisedName || "",
           authorisedDesignation: initialMember.authorisedDesignation || "",
@@ -112,8 +116,8 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
           emergencyContactRelationship: "", // Explicitly blank
           emergencyContactNumber: "", // Explicitly blank
           photoPath: "",
-          issueDate: toInputDate(new Date()),
-          expiryDate: toInputDate(new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000)),
+          issueDate: today.toISOString().split("T")[0],
+          expiryDate: threeMonthsFromNow.toISOString().split("T")[0],
           memberStatus: "Active",
           authorisedName: "",
           authorisedDesignation: "",

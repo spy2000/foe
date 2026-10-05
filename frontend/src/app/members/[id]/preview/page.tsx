@@ -104,13 +104,13 @@ export default function MemberPreviewPage({ params }: PageProps) {
         </div>
 
         {/* Action Buttons: Edit Member & PDF Download */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex w-full sm:w-auto items-center justify-center gap-3">
           <Link
             href={`/members/${member.id}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all whitespace-nowrap"
+            className="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white shadow-sm hover:bg-gray-50 text-sm font-medium whitespace-nowrap transition-colors"
             title="Edit Member Details"
           >
-            <Pencil className="h-4 w-4 text-[#F15A24]" />
+            <Pencil className="w-4 h-4 shrink-0 text-[#F15A24]" />
             <span>Edit Member</span>
           </Link>
 
@@ -118,6 +118,7 @@ export default function MemberPreviewPage({ params }: PageProps) {
             containerId="pdf-capture-stage"
             memberId={member.memberId}
             memberName={member.fullName}
+            buttonClassName="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-white bg-[#F15A24] shadow-sm hover:bg-[#d94815] text-sm font-medium whitespace-nowrap transition-colors cursor-pointer"
           />
         </div>
       </div>

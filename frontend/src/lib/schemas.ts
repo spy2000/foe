@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const phoneRegex = /^\+?[0-9]{10,15}$/;
 
-export const memberFormSchema = z
+export const memberBaseSchema = z
   .object({
     registrationNo: z.string().min(1, "Registration number is required"),
     fullName: z
@@ -33,19 +33,39 @@ export const memberFormSchema = z
     authorisedName: z.string().min(1, "Authorised name is required"),
     authorisedDesignation: z.string().min(1, "Authorised designation is required"),
     remarks: z.string().optional().nullable(),
-  })
-  .refine(
-    (data) => {
-      const issue = new Date(data.issueDate).getTime();
-      const expiry = new Date(data.expiryDate).getTime();
-      if (isNaN(issue) || isNaN(expiry)) return true;
-      return expiry >= issue;
-    },
-    {
-      message: "Expiry date must be greater than or equal to issue date",
-      path: ["expiryDate"],
-    }
-  );
+  });
+
+export function getMemberFormSchema(isEdit: boolean = false) {
+  return memberBaseSchema
+    .refine(
+      (data) => {
+        if (isEdit) return true;
+        const date = new Date(data.issueDate);
+        if (isNaN(date.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+      },
+      {
+        message: "Issue date must be today or in the future",
+        path: ["issueDate"],
+      }
+    )
+    .refine(
+      (data) => {
+        const issue = new Date(data.issueDate).getTime();
+        const expiry = new Date(data.expiryDate).getTime();
+        if (isNaN(issue) || isNaN(expiry)) return true;
+        return expiry > issue;
+      },
+      {
+        message: "Expiry date must be after issue date",
+        path: ["expiryDate"],
+      }
+    );
+}
+
+export const memberFormSchema = getMemberFormSchema(false);
 
 export type MemberFormValues = z.infer<typeof memberFormSchema>;
 

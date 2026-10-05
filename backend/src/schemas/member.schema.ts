@@ -34,8 +34,15 @@ export const createMemberSchema = z
       .string()
       .regex(phoneRegex, "Emergency contact number must be 10-15 digits with optional + prefix"),
     photoPath: z.string().min(1, "Photograph URL is required"),
-    issueDate: z.string().min(1, "Issue date is required"),
-    expiryDate: z.string().min(1, "Expiry date is required"),
+    issueDate: z.coerce.date().refine(
+      (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+      },
+      { message: "Issue date must be today or in the future" }
+    ),
+    expiryDate: z.coerce.date(),
     memberStatus: z.enum(["Active", "Inactive"]).default("Active"),
     authorisedName: z.string().min(1, "Authorised person name is required"),
     authorisedDesignation: z.string().min(1, "Authorised designation is required"),
@@ -46,10 +53,10 @@ export const createMemberSchema = z
       const issue = new Date(data.issueDate).getTime();
       const expiry = new Date(data.expiryDate).getTime();
       if (isNaN(issue) || isNaN(expiry)) return true;
-      return expiry >= issue;
+      return expiry > issue;
     },
     {
-      message: "Expiry date must be greater than or equal to issue date",
+      message: "Expiry date must be after issue date",
       path: ["expiryDate"],
     }
   );
@@ -92,8 +99,8 @@ export const updateMemberSchema = z
       .regex(phoneRegex, "Emergency contact number must be 10-15 digits with optional + prefix")
       .optional(),
     photoPath: z.string().min(1, "Photograph URL is required").optional(),
-    issueDate: z.string().min(1, "Issue date is required").optional(),
-    expiryDate: z.string().min(1, "Expiry date is required").optional(),
+    issueDate: z.coerce.date().optional(),
+    expiryDate: z.coerce.date().optional(),
     memberStatus: z.enum(["Active", "Inactive"]).optional(),
     authorisedName: z.string().min(1, "Authorised person name is required").optional(),
     authorisedDesignation: z.string().min(1, "Authorised designation is required").optional(),
@@ -105,10 +112,10 @@ export const updateMemberSchema = z
       const issue = new Date(data.issueDate).getTime();
       const expiry = new Date(data.expiryDate).getTime();
       if (isNaN(issue) || isNaN(expiry)) return true;
-      return expiry >= issue;
+      return expiry > issue;
     },
     {
-      message: "Expiry date must be greater than or equal to issue date",
+      message: "Expiry date must be after issue date",
       path: ["expiryDate"],
     }
   );
