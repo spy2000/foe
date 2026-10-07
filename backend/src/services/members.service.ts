@@ -11,7 +11,7 @@ export const createMemberSchema = z.object({
   dateOfJoining: z.string().or(z.date()),
   emergencyContactName: z.string().min(1, "Emergency contact name is required"),
   emergencyContactRelationship: z.string().min(1, "Relationship is required"),
-  emergencyContactNumber: z.string().min(10, "Emergency contact number must be at least 10 digits").max(15),
+  emergencyContactNumber: z.string().regex(/^\+91\d{10}$/, "Must be +91 followed by exactly 10 digits"),
   photoPath: z.string().min(1, "Photo is required"),
   issueDate: z.string().or(z.date()),
   expiryDate: z.string().or(z.date()),

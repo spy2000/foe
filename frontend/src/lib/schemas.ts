@@ -25,7 +25,7 @@ export const memberBaseSchema = z
     emergencyContactRelationship: z.string().min(1, "Relationship is required"),
     emergencyContactNumber: z
       .string()
-      .regex(phoneRegex, "Emergency contact number must be 10-15 digits"),
+      .regex(/^\+91\d{10}$/, "Must be +91 followed by exactly 10 digits"),
     photoPath: z.string().min(1, "Photograph upload is required"),
     issueDate: z.string().min(1, "Issue date is required"),
     expiryDate: z.string().min(1, "Expiry date is required"),

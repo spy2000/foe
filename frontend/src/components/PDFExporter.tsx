@@ -107,6 +107,15 @@ export default function PDFExporter({
         backgroundColor: "#ffffff",
         logging: false,
         onclone: (clonedDoc) => {
+          // 0. Ensure capture container is free of any transform: scale() or flex centering
+          const targetId = container.id || "pdf-capture-stage";
+          const clonedContainer = clonedDoc.getElementById(targetId);
+          if (clonedContainer) {
+            clonedContainer.style.transform = "none";
+            clonedContainer.style.display = "block";
+            clonedContainer.style.position = "relative";
+          }
+
           // 1. Inject standard Web Safe Fonts (Arial/Impact) to prevent font-rendering dropouts
           const styleSheet = clonedDoc.createElement("style");
           styleSheet.innerHTML = `

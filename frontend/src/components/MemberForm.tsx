@@ -80,6 +80,7 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
     setValue,
     reset,
     control,
+    watch,
     formState: { errors, isDirty, isValid },
   } = useForm<MemberFormValues>({
     mode: "onChange",
@@ -95,7 +96,11 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
           emailId: initialMember.emailId || "",
           emergencyContactName: initialMember.emergencyContactName || "",
           emergencyContactRelationship: initialMember.emergencyContactRelationship || "",
-          emergencyContactNumber: initialMember.emergencyContactNumber || "",
+          emergencyContactNumber: initialMember.emergencyContactNumber
+            ? initialMember.emergencyContactNumber.startsWith("+91")
+              ? initialMember.emergencyContactNumber.replace(/\s+/g, "")
+              : `+91${initialMember.emergencyContactNumber.replace(/\D/g, "").slice(-10)}`
+            : "",
           photoPath: initialMember.photoPath || "",
           issueDate: toInputDate(initialMember.issueDate) || today.toISOString().split("T")[0],
           expiryDate: toInputDate(initialMember.expiryDate) || threeMonthsFromNow.toISOString().split("T")[0],
@@ -125,26 +130,76 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
         },
   });
 
-  // Independent API Fetching - Blood Groups
+  // Fallback Blood Groups for offline / cold-start resiliency
+  const FALLBACK_BLOOD_GROUPS: BloodGroup[] = [
+    { id: 1, bloodGroup: "A+", isActive: true },
+    { id: 2, bloodGroup: "A-", isActive: true },
+    { id: 3, bloodGroup: "B+", isActive: true },
+    { id: 4, bloodGroup: "B-", isActive: true },
+    { id: 5, bloodGroup: "O+", isActive: true },
+    { id: 6, bloodGroup: "O-", isActive: true },
+    { id: 7, bloodGroup: "AB+", isActive: true },
+    { id: 8, bloodGroup: "AB-", isActive: true },
+  ];
+
+  // Resilient Initial Data Fetching (Blood Groups & Next ID)
   useEffect(() => {
-    let mounted = true;
-    api.getBloodGroups()
-      .then((res) => {
-        if (mounted && res.success && res.data) {
-          setBloodGroups(res.data);
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      try {
+        // Use Promise.allSettled to prevent one failure from crashing both
+        const [bloodGroupsRes, nextIdRes] = await Promise.allSettled([
+          api.getBloodGroups(),
+          !isEdit ? api.getNextMemberId() : Promise.resolve(null),
+        ]);
+
+        if (!isMounted) return;
+
+        if (bloodGroupsRes.status === "fulfilled" && bloodGroupsRes.value) {
+          const val = bloodGroupsRes.value;
+          const bgData = (val as any).data || (Array.isArray(val) ? val : []);
+          if (Array.isArray(bgData) && bgData.length > 0) {
+            const formatted: BloodGroup[] = bgData.map((item: any, idx: number) => {
+              if (typeof item === "string") {
+                return { id: idx + 1, bloodGroup: item, isActive: true };
+              }
+              return item;
+            });
+            setBloodGroups(formatted);
+          } else {
+            setBloodGroups(FALLBACK_BLOOD_GROUPS);
+          }
+        } else {
+          showToast("Could not load blood groups.", "error");
+          setBloodGroups(FALLBACK_BLOOD_GROUPS); // Fallback
         }
-      })
-      .catch((err) => {
-        console.error("Failed to load blood groups:", err);
-      })
-      .finally(() => {
-        if (mounted) setLoadingBloodGroups(false);
-      });
+
+        if (!isEdit) {
+          if (nextIdRes.status === "fulfilled" && nextIdRes.value) {
+            const val = nextIdRes.value as any;
+            const nextId = val?.data?.nextMemberId || val?.nextMemberId || val?.nextId || "0001";
+            setNextMemberId(nextId);
+          } else {
+            showToast("Could not generate next ID.", "error");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load form dependencies", error);
+      } finally {
+        if (isMounted) {
+          setLoadingBloodGroups(false);
+          setLoadingNextId(false);
+        }
+      }
+    };
+
+    loadInitialData();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
-  }, []);
+  }, [isEdit, initialMember]);
 
   // Sync settings with global settings or fetch if not present
   useEffect(() => {
@@ -178,29 +233,6 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
       };
     }
   }, [globalSettings, isEdit, setValue]);
-
-  // Independent API Fetching - Next Member ID (only in create mode)
-  useEffect(() => {
-    if (!isEdit) {
-      let mounted = true;
-      api.getNextMemberId()
-        .then((res) => {
-          if (mounted && res.success && res.data) {
-            setNextMemberId(res.data.nextMemberId);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load next member id:", err);
-        })
-        .finally(() => {
-          if (mounted) setLoadingNextId(false);
-        });
-
-      return () => {
-        mounted = false;
-      };
-    }
-  }, [isEdit]);
 
   // Cleanup object URL on unmount
   useEffect(() => {
@@ -755,14 +787,29 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Emergency Contact Number <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                      <Phone className="h-4 w-4" />
+                  <div className="relative flex rounded-xl border border-gray-200 focus-within:border-[#F15A24] focus-within:ring-2 focus-within:ring-orange-100 overflow-hidden bg-white">
+                    <div className="flex items-center pl-3 pr-2.5 bg-gray-50 border-r border-gray-200 text-xs font-bold text-gray-700 select-none">
+                      +91
                     </div>
                     <input
-                      {...register("emergencyContactNumber")}
-                      placeholder="Enter emergency number (e.g. +91 9136643813)"
-                      className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2 text-xs font-medium text-gray-900 focus:border-[#F15A24] focus:outline-none focus:ring-2 focus:ring-orange-100"
+                      type="tel"
+                      placeholder="10-digit mobile number"
+                      maxLength={10}
+                      value={
+                        (watch("emergencyContactNumber") || "")
+                          .replace(/^\+91/, "")
+                          .replace(/\D/g, "")
+                          .slice(0, 10)
+                      }
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        setValue(
+                          "emergencyContactNumber",
+                          digits ? `+91${digits}` : "",
+                          { shouldValidate: true, shouldDirty: true }
+                        );
+                      }}
+                      className="w-full px-3 py-2 text-xs font-medium text-gray-900 focus:outline-none"
                     />
                   </div>
                   {errors.emergencyContactNumber && (
