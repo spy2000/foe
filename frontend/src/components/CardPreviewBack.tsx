@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users, ShieldCheck, PhoneCall } from "lucide-react";
+import { UsersRound, ShieldCheck, Phone } from "lucide-react";
 
 export interface CardPreviewBackProps {
   settings: {
@@ -35,48 +35,52 @@ export default function CardPreviewBack({
   isPrintMode = false,
 }: CardPreviewBackProps) {
   const isPrintView = isPrint || isPrintMode;
-  const contactNo =
+  const rawContact =
     emergencyContactNumber ||
     member?.emergencyContactNumber ||
     settings.defaultEmergencyContact ||
-    "+91 9136643813";
+    "9136643813";
+
+  // Enforce clean +91 prefix formatting for display without duplicate prefixes
+  const cleanContact = rawContact.replace(/^\+?91\s*/, "").trim();
+  const formattedContact = cleanContact ? `+91 ${cleanContact}` : "+91 9136643813";
 
   return (
     <div
       id={id}
-      className={`relative w-[340px] h-[540px] bg-white rounded-[20px] overflow-hidden shrink-0 box-border ${
-        isPrintView ? "shadow-none border-none" : "border border-gray-300 shadow-sm"
+      className={`relative w-[340px] h-[536px] bg-white rounded-[20px] overflow-hidden border border-gray-300 shrink-0 box-border ${
+        isPrintView ? "shadow-none" : "shadow-sm"
       }`}
       style={{
         width: "340px",
-        height: "540px",
+        height: "536px",
         boxSizing: "border-box",
         transform: scale !== 1 ? `scale(${scale})` : undefined,
         transformOrigin: "top left",
         fontFamily: "'Arial Black', 'Inter', sans-serif",
       }}
     >
-      {/* A. The Concave Scoop Header */}
-      <div className="absolute top-0 left-0 w-full h-[140px] z-0 overflow-hidden pointer-events-none">
-        {/* Brown Layer */}
+      {/* A. Convex Scoop Header Curves */}
+      <div className="absolute top-0 left-0 w-full h-[120px] z-0 overflow-hidden pointer-events-none">
+        {/* Dark Brown Shadow Layer */}
         <svg
-          viewBox="0 0 340 140"
+          viewBox="0 0 340 120"
           preserveAspectRatio="none"
-          className="absolute top-0 left-0 w-full h-[140px]"
+          className="absolute top-0 left-0 w-full h-[120px]"
         >
           <path
-            d="M0,0 L340,0 L340,140 C255,100 85,100 0,140 Z"
+            d="M0,0 L340,0 L340,75 C255,120 85,120 0,75 Z"
             fill="#3B1B0B"
           />
         </svg>
-        {/* Orange Layer */}
+        {/* Primary Orange Layer */}
         <svg
-          viewBox="0 0 340 130"
+          viewBox="0 0 340 110"
           preserveAspectRatio="none"
-          className="absolute top-0 left-0 w-full h-[130px]"
+          className="absolute top-0 left-0 w-full h-[110px]"
         >
           <path
-            d="M0,0 L340,0 L340,130 C255,90 85,90 0,130 Z"
+            d="M0,0 L340,0 L340,65 C255,110 85,110 0,65 Z"
             fill="#F15A24"
           />
         </svg>
@@ -85,151 +89,172 @@ export default function CardPreviewBack({
       {/* Header Content */}
       <h1
         style={{ color: "#ffffff" }}
-        className="absolute top-[20px] w-full text-center text-[19px] text-white font-black tracking-wide uppercase leading-tight z-10 drop-shadow-sm"
+        className="absolute top-[12px] w-full text-center text-[18px] text-white font-black tracking-wide uppercase leading-tight z-10 drop-shadow-sm"
       >
         {settings.trustName || "FRIENDS OF EDUCATION"}
       </h1>
       <p
         style={{ color: "#ffffff" }}
-        className="absolute top-[46px] w-full text-center text-[11px] text-white font-bold tracking-widest uppercase z-10 leading-none"
+        className="absolute top-[34px] w-full text-center text-[10.5px] text-white font-bold tracking-widest uppercase z-10 leading-none"
       >
         {settings.trustSubtitle || "CHARITABLE TRUST"}
       </p>
 
       {/* Registration Pill */}
-      <div
-        style={{ backgroundColor: "#3B1B0B", color: "#ffffff" }}
-        className="absolute top-[95px] left-1/2 -translate-x-1/2 bg-[#3B1B0B] text-white text-[10px] font-bold px-3 py-0.5 rounded-full z-10 whitespace-nowrap shadow-sm"
+      <div 
+        className="absolute left-1/2 -translate-x-1/2 flex justify-center z-10"
+        style={{ top: isPrintView ? '75px' : '65px' }}
       >
-        {settings.registrationNo || "Reg. E-0040751(GBR)"}
+        <div
+          style={{ backgroundColor: "#3B1B0B", color: "#ffffff" }}
+          className="bg-[#3B1B0B] text-white text-[10.5px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap"
+        >
+          {settings.registrationNo || "Reg. E-0040751(GBR)"}
+        </div>
       </div>
 
-      {/* B. Icon List with Underlines (NO Side Lines) */}
-      <div className="absolute top-[155px] left-[25px] right-[25px] flex flex-col gap-5 z-10">
+      {/* Container for Clauses (Explicit Div Underlines - Fixes html2canvas strikethrough bug) */}
+      <div className="absolute top-[130px] left-[20px] right-[20px] flex flex-col gap-6 z-20">
         {/* Item 1: ABOUT US */}
-        <div className="flex items-start gap-3.5">
+        <div className="flex items-start gap-3 w-full">
           <div
             style={{ backgroundColor: "#F15A24", borderColor: "#ffffff" }}
-            className="w-[36px] h-[36px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
+            className="w-[40px] h-[40px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
           >
-            <Users className="w-5 h-5 text-white" color="#ffffff" />
+            <UsersRound className="w-5 h-5 text-white" color="#ffffff" />
           </div>
-          <div className="flex-1 min-w-0">
+
+          <div className="block flex-1 min-w-0">
+            {/* 1. Title Block */}
             <div
-              style={{ borderBottomColor: "#d1d5db" }}
-              className="border-b-[1.5px] border-gray-300 pb-0.5 mb-1 w-full"
-            >
-              <span
-                style={{ color: "#222222" }}
-                className="text-[13px] font-black text-[#222222] uppercase tracking-wide"
-              >
-                ABOUT US
-              </span>
-            </div>
-            <p
               style={{ color: "#222222" }}
-              className="text-[10px] text-[#222222] font-semibold leading-tight line-clamp-3"
+              className="text-[13px] font-black text-[#222] uppercase tracking-tight w-full"
+            >
+              ABOUT US
+            </div>
+            {/* 2. Explicit Line Block (Fixes PDF Bug) */}
+            <div
+              style={{ backgroundColor: "#555555" }}
+              className="h-[2px] w-[95%] bg-[#555] mt-1 mb-1.5"
+            />
+            {/* 3. Text Block */}
+            <div
+              style={{ color: "#222222" }}
+              className="text-[11px] text-[#222] font-semibold leading-relaxed"
             >
               {settings.aboutUsText ||
                 "Friends Of Education Charitable Trust is committed to supporting education and empowering lives for a better tomorrow."}
-            </p>
+            </div>
           </div>
         </div>
 
         {/* Item 2: THIS CARD IS VALID FOR */}
-        <div className="flex items-start gap-3.5">
+        <div className="flex items-start gap-3 w-full">
           <div
             style={{ backgroundColor: "#F15A24", borderColor: "#ffffff" }}
-            className="w-[36px] h-[36px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
+            className="w-[40px] h-[40px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
           >
             <ShieldCheck className="w-5 h-5 text-white" color="#ffffff" />
           </div>
-          <div className="flex-1 min-w-0">
+
+          <div className="block flex-1 min-w-0">
+            {/* 1. Title Block */}
             <div
-              style={{ borderBottomColor: "#d1d5db" }}
-              className="border-b-[1.5px] border-gray-300 pb-0.5 mb-1 w-full"
-            >
-              <span
-                style={{ color: "#222222" }}
-                className="text-[13px] font-black text-[#222222] uppercase tracking-wide"
-              >
-                THIS CARD IS VALID FOR
-              </span>
-            </div>
-            <p
               style={{ color: "#222222" }}
-              className="text-[10px] text-[#222222] font-semibold leading-tight line-clamp-3"
+              className="text-[13px] font-black text-[#222] uppercase tracking-tight w-full"
+            >
+              THIS CARD IS VALID FOR
+            </div>
+            {/* 2. Explicit Line Block (Fixes PDF Bug) */}
+            <div
+              style={{ backgroundColor: "#555555" }}
+              className="h-[2px] w-[95%] bg-[#555] mt-1 mb-1.5"
+            />
+            {/* 3. Text Block */}
+            <div
+              style={{ color: "#222222" }}
+              className="text-[11px] text-[#222] font-semibold leading-relaxed"
             >
               {settings.validityClause ||
                 "Official use only by authorised members of the trust."}
-            </p>
+            </div>
           </div>
         </div>
 
-        {/* Item 3: IN CASE OF EMERGENCY, CONTACT */}
-        <div className="flex items-start gap-3.5">
+        {/* Item 3: EMERGENCY CONTACT */}
+        <div className="flex items-start gap-3 w-full">
           <div
             style={{ backgroundColor: "#F15A24", borderColor: "#ffffff" }}
-            className="w-[36px] h-[36px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
+            className="w-[40px] h-[40px] rounded-full bg-[#F15A24] flex items-center justify-center shrink-0 border-[2px] border-white shadow-sm mt-0.5"
           >
-            <PhoneCall className="w-5 h-5 text-white" color="#ffffff" />
+            <Phone className="w-5 h-5 text-white" color="#ffffff" />
           </div>
-          <div className="flex-1 min-w-0">
-            <div
-              style={{ borderBottomColor: "#d1d5db" }}
-              className="border-b-[1.5px] border-gray-300 pb-0.5 mb-1 w-full"
-            >
-              <span
+
+          <div className="block flex-1 min-w-0 pr-1">
+            <div className="flex items-center gap-2 w-full border-b-[2px] border-[#555] pb-0.5 mb-1 min-w-0 pr-1">
+              <span 
                 style={{ color: "#222222" }}
-                className="text-[13px] font-black text-[#222222] uppercase tracking-wide"
+                className={`font-black text-[#222] uppercase whitespace-nowrap ${
+                  isPrintView ? 'text-[11px] tracking-tighter' : 'text-[12px] tracking-tight'
+                }`}
               >
                 IN CASE OF EMERGENCY, CONTACT
               </span>
             </div>
-            {/* Phone number rendered in BLACK (text-[#222222]), NOT orange */}
-            <p
+            <div
               style={{ color: "#222222" }}
-              className="text-[13px] font-black text-[#222222] mt-0.5"
+              className="text-[14px] font-black text-[#222] tracking-wide mt-0.5 pb-1 leading-normal"
             >
-              {contactNo}
-            </p>
+              {formattedContact}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* C. Footer Disclaimer & Banner */}
-      <div className="absolute bottom-[40px] left-[25px] right-[25px] flex flex-col items-center z-10">
-        {/* Line with Center Dot */}
-        <div className="flex items-center justify-center w-full gap-2 mb-2 px-6">
-          <div
-            style={{ backgroundColor: "#d1d5db" }}
-            className="h-[1.5px] bg-gray-300 flex-1"
-          ></div>
-          <div
+      {/* C. PDF-Safe Footer Separator */}
+      <div className="absolute bottom-[42px] left-0 w-full text-center z-20 px-4">
+        <div className="w-full text-center whitespace-nowrap mb-2">
+          <span
+            style={{ backgroundColor: "#555555" }}
+            className="inline-block align-middle w-[100px] h-[1.5px] bg-[#555]"
+          />
+          <span
             style={{ backgroundColor: "#F15A24" }}
-            className="w-[6px] h-[6px] rounded-full bg-[#F15A24] shrink-0"
-          ></div>
-          <div
-            style={{ backgroundColor: "#d1d5db" }}
-            className="h-[1.5px] bg-gray-300 flex-1"
-          ></div>
+            className="inline-block align-middle w-[6px] h-[6px] rounded-full bg-[#F15A24] mx-2"
+          />
+          <span
+            style={{ backgroundColor: "#555555" }}
+            className="inline-block align-middle w-[100px] h-[1.5px] bg-[#555]"
+          />
         </div>
-        {/* Disclaimer Text */}
-        <p
-          style={{ color: "#444444" }}
-          className="text-[9px] text-[#444444] italic font-semibold text-center leading-tight line-clamp-3"
+        <div
+          style={{ color: "#222222" }}
+          className="text-[9px] text-[#222] italic font-bold leading-tight px-2 whitespace-normal break-words"
         >
           {settings.returnNote ||
             "If found, please return this card to the Friends Of Education Charitable Trust at the above address or contact number"}
-        </p>
+        </div>
       </div>
 
-      {/* Footer URL Banner */}
+      {/* Footer URL Banner with dark brown top border */}
       <div
-        style={{ backgroundColor: "#F15A24", color: "#ffffff" }}
-        className="absolute bottom-0 left-0 w-full h-[35px] bg-[#F15A24] rounded-b-[20px] flex items-center justify-center text-[12px] font-bold text-white tracking-wide z-10"
+        style={{
+          backgroundColor: "#F15A24",
+          borderTopColor: "#3B1B0B",
+          color: "#ffffff",
+        }}
+        className="absolute bottom-0 left-0 w-full h-[36px] bg-[#F15A24] border-t-[3px] border-[#3B1B0B] flex items-center justify-center z-20"
       >
-        <span>{settings.websiteUrl || "www.friendsofeducation.in"}</span>
+        <span 
+          style={{ 
+            color: "#ffffff",
+            lineHeight: isPrintView ? '33px' : 'normal',
+            display: isPrintView ? 'block' : 'inline'
+          }}
+          className="text-[12px] font-bold text-white tracking-wide text-center w-full"
+        >
+          {settings.websiteUrl || "www.friendsofeducation.in"}
+        </span>
       </div>
     </div>
   );

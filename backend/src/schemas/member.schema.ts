@@ -32,7 +32,7 @@ export const createMemberSchema = z
     ),
     emergencyContactNumber: z
       .string()
-      .regex(phoneRegex, "Emergency contact number must be 10-15 digits with optional + prefix"),
+      .regex(/^\+91\d{10}$/, "Must be +91 followed by exactly 10 digits"),
     photoPath: z.string().min(1, "Photograph URL is required"),
     issueDate: z.coerce.date().refine(
       (date) => {
@@ -96,7 +96,7 @@ export const updateMemberSchema = z
       .optional(),
     emergencyContactNumber: z
       .string()
-      .regex(phoneRegex, "Emergency contact number must be 10-15 digits with optional + prefix")
+      .regex(/^\+91\d{10}$/, "Must be +91 followed by exactly 10 digits")
       .optional(),
     photoPath: z.string().min(1, "Photograph URL is required").optional(),
     issueDate: z.coerce.date().optional(),

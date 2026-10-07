@@ -132,7 +132,7 @@ export default function MemberPreviewPage({ params }: PageProps) {
               <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
                 Front Side
               </span>
-              <div className="w-[340px] h-[540px] shrink-0">
+              <div className="w-[340px] h-[536px] shrink-0">
                 <CardPreviewFront member={member} settings={settings} />
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function MemberPreviewPage({ params }: PageProps) {
               <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
                 Back Side
               </span>
-              <div className="w-[340px] h-[540px] shrink-0">
+              <div className="w-[340px] h-[536px] shrink-0">
                 <CardPreviewBack
                   member={member}
                   settings={settings}
@@ -162,25 +162,20 @@ export default function MemberPreviewPage({ params }: PageProps) {
           left: "-9999px",
           top: "-9999px",
           width: "740px",
-          height: "540px",
+          height: "536px",
           backgroundColor: "#ffffff",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "20px",
           boxSizing: "border-box",
         }}
       >
         {/* Front Card */}
-        <div style={{ width: "340px", height: "540px", flexShrink: 0 }}>
-          <CardPreviewFront isPrint={true} member={member} settings={settings} />
+        <div style={{ position: "absolute", left: "0px", top: "0px", width: "340px", height: "536px", flexShrink: 0 }}>
+          <CardPreviewFront isPrintMode={true} member={member} settings={settings} />
         </div>
 
         {/* Back Card */}
-        <div style={{ width: "340px", height: "540px", flexShrink: 0 }}>
+        <div style={{ position: "absolute", left: "400px", top: "0px", width: "340px", height: "536px", flexShrink: 0 }}>
           <CardPreviewBack
-            isPrint={true}
+            isPrintMode={true}
             member={member}
             settings={settings}
             emergencyContactNumber={member.emergencyContactNumber}

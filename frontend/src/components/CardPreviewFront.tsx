@@ -65,58 +65,60 @@ export default function CardPreviewFront({
   return (
     <div
       id={id}
-      className={`relative w-[340px] h-[540px] bg-white rounded-[20px] overflow-hidden shrink-0 box-border ${
-        isPrintView ? "shadow-none border-none" : "border border-gray-300 shadow-sm"
+      className={`relative w-[340px] h-[536px] bg-white rounded-[20px] overflow-hidden border border-gray-300 shrink-0 box-border ${
+        isPrintView ? "shadow-none" : "shadow-sm"
       }`}
       style={{
         width: "340px",
-        height: "540px",
+        height: "536px",
         boxSizing: "border-box",
         transform: scale !== 1 ? `scale(${scale})` : undefined,
         transformOrigin: "top left",
         fontFamily: "'Arial Black', 'Inter', sans-serif",
       }}
     >
-      {/* A. The Convex Wave Header */}
-      <div className="absolute top-0 left-0 w-[340px] h-[190px] z-0 overflow-hidden pointer-events-none">
+      {/* A. The Deep Convex Wave Header (Takes up ~45% of card) */}
+      <div className="absolute top-0 left-0 w-full h-[250px] z-0 overflow-hidden pointer-events-none">
         {/* Dark Brown Bottom Shadow Layer */}
         <svg
-          viewBox="0 0 340 190"
+          viewBox="0 0 340 250"
           preserveAspectRatio="none"
-          className="absolute top-0 left-0 w-full h-[190px]"
+          className="absolute top-0 left-0 w-full h-[250px]"
         >
           <path
-            d="M0,0 L340,0 L340,120 C255,200 85,200 0,120 Z"
+            d="M0,0 L340,0 L340,160 C255,250 85,250 0,160 Z"
             fill="#3B1B0B"
           />
         </svg>
         {/* Primary Orange Layer */}
         <svg
-          viewBox="0 0 340 180"
+          viewBox="0 0 340 240"
           preserveAspectRatio="none"
-          className="absolute top-0 left-0 w-full h-[180px]"
+          className="absolute top-0 left-0 w-full h-[240px]"
         >
           <path
-            d="M0,0 L340,0 L340,115 C255,190 85,190 0,115 Z"
+            d="M0,0 L340,0 L340,150 C255,240 85,240 0,150 Z"
             fill="#F15A24"
           />
         </svg>
       </div>
 
-      {/* Header Content (Absolute inside card, z-10) */}
+      {/* Header Content (Zero transforms - Inline-block centered for html2canvas) */}
       {/* Logo */}
-      <img
-        src={logoSrc}
-        alt="FOE Logo"
-        className="absolute top-[12px] left-1/2 -translate-x-1/2 h-[45px] object-contain z-10 filter drop-shadow-sm"
-        crossOrigin="anonymous"
-        onError={() => setLogoSrc("/logo.png")}
-      />
+      <div className="absolute top-[20px] left-0 w-full text-center z-10">
+        <img
+          src={logoSrc}
+          alt="FOE Logo"
+          className="inline-block h-[48px] object-contain filter drop-shadow-sm"
+          crossOrigin="anonymous"
+          onError={() => setLogoSrc("/logo.png")}
+        />
+      </div>
 
       {/* Main Title */}
       <h1
         style={{ color: "#ffffff" }}
-        className="absolute top-[62px] w-full text-center text-[19px] text-white font-black tracking-wide uppercase leading-tight z-10 drop-shadow-sm"
+        className="absolute top-[75px] w-full text-center text-[22px] text-white font-black tracking-wide uppercase drop-shadow-sm z-10 leading-tight"
       >
         {settings.trustName || "FRIENDS OF EDUCATION"}
       </h1>
@@ -124,101 +126,119 @@ export default function CardPreviewFront({
       {/* Subtitle */}
       <p
         style={{ color: "#ffffff" }}
-        className="absolute top-[88px] w-full text-center text-[11px] text-white font-bold tracking-widest uppercase z-10 leading-none"
+        className="absolute top-[102px] w-full text-center text-[13px] text-white font-bold tracking-widest uppercase z-10 leading-none"
       >
         {settings.trustSubtitle || "CHARITABLE TRUST"}
       </p>
 
       {/* Registration Pill */}
-      <div
-        style={{ backgroundColor: "#3B1B0B", color: "#ffffff" }}
-        className="absolute top-[108px] left-1/2 -translate-x-1/2 bg-[#3B1B0B] text-white text-[10.5px] font-bold px-4 py-0.5 rounded-full whitespace-nowrap shadow-sm z-10"
+      <div 
+        className="absolute left-1/2 -translate-x-1/2 flex justify-center z-10"
+        style={{ top: isPrintView ? '135px' : '125px' }} 
       >
-        {settings.registrationNo || "Reg. E-0040751(GBR)"}
-      </div>
-
-      {/* B. Member Photo (Overlapping the Wave Exactly 50%) */}
-      <div className="absolute top-[125px] left-1/2 -translate-x-1/2 z-20">
-        <div className="w-[110px] h-[130px] rounded-[14px] border-[4px] border-white shadow-md bg-gray-100 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photoSrc}
-            alt={member.fullName}
-            className="w-full h-full object-cover"
-            crossOrigin="anonymous"
-            onError={() => setPhotoSrc("/images/placeholder-avatar.png")}
-          />
+        <div
+          style={{ backgroundColor: "#3B1B0B", color: "#ffffff" }}
+          className="bg-[#3B1B0B] text-white text-[11px] font-bold px-4 py-0.5 rounded-full shadow-sm whitespace-nowrap"
+        >
+          {settings.registrationNo || "Reg. E-0040751(GBR)"}
         </div>
       </div>
 
-      {/* C. Name, Designation & Details Grid */}
-      {/* Member Name */}
-      <h2
+      {/* Photo */}
+      <div className="absolute top-[155px] left-1/2 -translate-x-1/2 flex justify-center z-20">
+        <img
+          src={photoSrc}
+          alt={member.fullName}
+          className="w-[96px] h-[116px] rounded-[14px] border-[3px] border-white shadow-md object-cover bg-gray-100"
+          crossOrigin="anonymous"
+          onError={() => setPhotoSrc("/images/placeholder-avatar.png")}
+        />
+      </div>
+
+      {/* Name & Designation - Shifted Up */}
+      <div
         style={{ color: "#222222" }}
-        className="absolute top-[265px] w-full text-center text-[21px] font-black text-[#222222] capitalize leading-none z-10 tracking-tight"
+        className="absolute top-[280px] left-0 w-full text-center text-[21px] font-black text-[#222] capitalize leading-none tracking-tight z-10"
       >
         {toTitleCase(member.fullName || "Member Full Name")}
-      </h2>
-
-      {/* Designation */}
-      <p
-        style={{ color: "#555555" }}
-        className="absolute top-[290px] w-full text-center text-[12px] font-bold text-[#555555] leading-tight z-10"
+      </div>
+      <div
+        style={{ color: "#444444" }}
+        className="absolute top-[305px] left-0 w-full text-center text-[12px] font-bold text-[#444] z-10"
       >
         {member.designation || "Designation"}
-      </p>
+      </div>
 
       {/* Details Grid */}
-      <div className="absolute top-[340px] left-[30px] right-[30px] z-10">
+      <div className="absolute top-[335px] left-[20px] w-[215px] z-20">
         <div
           style={{ color: "#222222" }}
-          className="grid grid-cols-[85px_15px_1fr] gap-y-1.5 text-[12px] font-bold text-[#222222]"
+          className="grid grid-cols-[85px_10px_1fr] gap-y-1 w-full items-start text-[12px] font-bold text-[#222222]"
         >
-          <div>ID No.</div>
-          <div className="text-center">:</div>
-          <div className="truncate">{member.memberId || "0001"}</div>
+          {/* ID Row */}
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] whitespace-nowrap pb-1 leading-normal">ID No.</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] text-center pb-1 leading-normal">:</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] truncate pb-1 leading-normal">{member.memberId || "0001"}</span>
 
-          <div>Blood Group</div>
-          <div className="text-center">:</div>
-          <div className="truncate">{bloodGroupStr}</div>
+          {/* Blood Group Row */}
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] whitespace-nowrap pb-1 leading-normal">Blood Group</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] text-center pb-1 leading-normal">:</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] truncate pb-1 leading-normal">{bloodGroupStr}</span>
 
-          <div>Contact</div>
-          <div className="text-center">:</div>
-          <div className="truncate">{member.contactNumber || "+91 9820556711"}</div>
+          {/* Contact Row */}
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] whitespace-nowrap pb-1 leading-normal">Contact</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] text-center pb-1 leading-normal">:</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] truncate pb-1 leading-normal">{member.contactNumber || "+91 9820556711"}</span>
 
-          <div>Email</div>
-          <div className="text-center">:</div>
-          <div className="truncate">{member.emailId || "contact@friendsofeducation.in"}</div>
+          {/* Email Row */}
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] whitespace-nowrap pb-1 leading-normal">Email</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] text-center pb-1 leading-normal">:</span>
+          <span style={{ color: "#222222" }} className="text-[12px] font-bold text-[#222] break-words pb-1 leading-normal pr-1">
+            {member.emailId || "contact@friendsofeducation.in"}
+          </span>
         </div>
       </div>
 
-      {/* D. Signature Box */}
-      <div className="absolute bottom-[45px] right-[30px] z-10 flex flex-col items-end">
+      {/* Signature - Safely in the bottom right corner */}
+      <div className="absolute bottom-[40px] right-[15px] w-[110px] text-right z-30">
         {hasSignature ? (
           <img
             src={settings.signatureUrl}
-            alt="Authorised Signature"
-            className="h-[35px] object-contain ml-auto"
+            alt="Signature"
+            className="inline-block h-[38px] max-w-full object-contain object-right"
             crossOrigin="anonymous"
             onError={() => setSigError(true)}
           />
         ) : (
-          <div className="h-[35px]" />
+          <div className="h-[38px]" />
         )}
-        <p
+        <div
           style={{ color: "#222222" }}
-          className="text-[10px] font-bold text-[#222222] mt-0.5 whitespace-nowrap"
+          className="text-[10px] font-bold text-[#222] mt-0.5 whitespace-nowrap text-right w-full"
         >
           Authorised signature
-        </p>
+        </div>
       </div>
 
-      {/* Footer URL Banner */}
+      {/* Footer URL Banner with dark brown top border */}
       <div
-        style={{ backgroundColor: "#F15A24", color: "#ffffff" }}
-        className="absolute bottom-0 left-0 w-full h-[35px] bg-[#F15A24] rounded-b-[20px] flex items-center justify-center text-[12px] font-bold text-white tracking-wide z-10"
+        style={{
+          backgroundColor: "#F15A24",
+          borderTopColor: "#3B1B0B",
+          color: "#ffffff",
+        }}
+        className="absolute bottom-0 left-0 w-full h-[36px] bg-[#F15A24] border-t-[3px] border-[#3B1B0B] flex items-center justify-center z-20"
       >
-        <span>{settings.websiteUrl || "www.friendsofeducation.in"}</span>
+        <span 
+          style={{ 
+            color: "#ffffff",
+            lineHeight: isPrintView ? '33px' : 'normal',
+            display: isPrintView ? 'block' : 'inline'
+          }}
+          className="text-[12px] font-bold text-white tracking-wide text-center w-full"
+        >
+          {settings.websiteUrl || "www.friendsofeducation.in"}
+        </span>
       </div>
     </div>
   );
