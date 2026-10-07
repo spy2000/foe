@@ -1,119 +1,145 @@
-# Friends of Education (FOE) - Decoupled ID Card System & Admin Portal
+<div align="center">
 
-Production full-stack decoupled monorepo architecture for **Friends of Education Charitable Trust (Reg. E-0040751(GBR))** ID card generation, administration, asset management, and print-ready PDF export.
+# 🪪 ID Card Generator & Admin Portal (v1.0)
 
----
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma)](https://prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-NeonDB-4169E1?style=flat-square&logo=postgresql)](https://neon.tech/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 
-## 🏛️ Project Architecture
+A production-ready, decoupled monorepo application for managing organization members and generating pixel-perfect, dual-sided CR80 ID cards in high-DPI PDF format.
 
-```
-foe/
-├── docker-compose.yml          # PostgreSQL 16 local service container
-├── docker-compose.prod.yml     # Multi-stage production compose (DB + Backend + Frontend)
-├── Dockerfile.backend          # Fastify / Node.js container
-├── Dockerfile.frontend         # Next.js standalone container
-├── .env                        # Root environment variables
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma       # BloodGroup, Member (BigInt PK), CardSettings
-│   │   └── seed.ts             # Seeds 8 Blood Groups, default CardSettings, and 0001 sample
-│   ├── src/
-│   │   ├── config/             # Cloudinary & Prisma DB singletons
-│   │   ├── routes/             # Fastify REST endpoints under /api
-│   │   ├── controllers/        # Request handlers & validation
-│   │   ├── services/           # Business logic, sequential ID generation, DB queries
-│   │   └── app.ts              # Fastify server, BigInt JSON serializer, CORS, Multipart
-│   ├── package.json
-│   └── tsconfig.json
-└── frontend/
-    ├── public/
-    │   ├── logo.png            # Official Friends of Education high-res logo
-    │   └── signature.svg       # Authorised signature graphic
-    ├── src/
-    │   ├── app/
-    │   │   ├── layout.tsx      # Root layout with responsive navigation & toast
-    │   │   ├── settings/page.tsx           # Route 1: Asset & card configuration manager
-    │   │   ├── members/create/page.tsx     # Route 2: Pixel-perfect member registration form
-    │   │   ├── members/page.tsx            # Route 3: Descending member directory with cursor pagination
-    │   │   └── members/[id]/preview/page.tsx # Route 4: Live CR80 side-by-side card preview & PDF export
-    │   ├── components/
-    │   │   ├── Navbar.tsx           # Global branding navigation
-    │   │   ├── CardPreviewFront.tsx # Front ID card with curved header, photo, and website footer
-    │   │   ├── CardPreviewBack.tsx  # Back ID card with About Us, Validity, Emergency contact
-    │   │   ├── PDFExporter.tsx      # High-res client PDF generator (html2canvas + jsPDF)
-    │   │   └── Toast.tsx            # Animated notification alert system
-    │   └── lib/
-    │       ├── api.ts          # Strongly typed client for backend REST API
-    │       └── utils.ts        # Date formatting & base64 image proxy conversion
-    ├── package.json
-    ├── tailwind.config.ts
-    └── next.config.ts
-```
+</div>
 
 ---
 
-## 🚀 Quickstart & Verification Flow
+## ✨ Key Features & Flows
 
-### Prerequisites
-- Node.js 18+ or 20+
-- Docker & Docker Compose (or an active PostgreSQL 16 instance)
+### 🎨 Pixel-Perfect ID Card Rendering
+*   **Dual-Sided CR80 Compliance:** Strict adherence to physical ID card dimensions (85.6mm × 53.98mm).
+*   **High-DPI PDF Export:** Integrated `html2canvas` and `jsPDF` engine with scale multipliers and CSS normalization to prevent layout shifts, ensuring razor-sharp typography and exact vector curves on the printed A5 canvas.
+*   **Dynamic Data Binding:** Real-time visual preview of members' photos, credentials, and organizational settings on both the front and back of the card.
 
-### Step 1: Start PostgreSQL Database
-```bash
-docker compose up -d postgres
+### 🏢 Organization Settings Management
+*   **Global Brand Control:** Manage trust/organization names, registration numbers, and default signatory details.
+*   **Custom Clauses:** Edit Back-Card information (About Us, Validity, Emergency Returns) with live UI updates.
+
+### ☁️ Strict Deferred Media Lifecycle (Cloudinary)
+*   **Zero-Waste Uploads:** Images (Logos, Signatures, Member Photos) are staged in local memory via `URL.createObjectURL` and only uploaded to Cloudinary upon final form submission.
+*   **Orphan Asset Cleanup:** When an image is replaced or a member is permanently deleted, the backend automatically targets and destroys the old asset in the Cloudinary bucket.
+
+### 👥 Member Directory & Bulk Operations
+*   **Stateful Table:** Cursor-based pagination and search filtering.
+*   **Soft & Hard Deletes:** Members can be safely archived (soft delete) or permanently erased from the PostgreSQL database.
+*   **Bulk Actions:** A floating action bar handles multi-select array operations for rapid administration.
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technology |
+| :--- | :--- |
+| **Frontend** | Next.js (App Router), React, Tailwind CSS, Headless UI, Zod |
+| **Backend** | Node.js, Fastify / Express, Prisma ORM, Winston Logger |
+| **Database** | PostgreSQL (Hosted on NeonDB, Docker for local dev) |
+| **Storage** | Cloudinary (Secure URL asset management) |
+| **Print Engine**| `html2canvas`, `jsPDF` |
+
+---
+
+## 🏗️ Project Structure (Monorepo)
+
+```text
+id-card-portal/
+├── frontend/                 # Next.js Application
+│   ├── src/app/              # App Router pages (members, settings, preview)
+│   ├── src/components/       # Reusable UI (PDFExporter, CardPreview, Modals)
+│   └── src/lib/              # API interceptors and utilities
+├── backend/                  # Node.js API
+│   ├── src/controllers/      # Business logic & Cloudinary purges
+│   ├── src/routes/           # Express/Fastify route definitions
+│   └── prisma/               # Database schema and seed files
+└── docker-compose.yml        # Local PostgreSQL container orchestration
 ```
-Verify the container status:
-```bash
-docker ps
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1. Prerequisites
+*   Node.js (v18+)
+*   Yarn or npm
+*   Docker Desktop (for local database)
+*   Cloudinary Account (for image uploads)
+
+### 2. Environment Configuration
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+# backend/.env
+DATABASE_URL="postgresql://user:password@localhost:5433/foe_db?schema=public"
+PORT=5000
+CLOUDINARY_CLOUD_NAME="your_cloud_name"
+CLOUDINARY_API_KEY="your_api_key"
+CLOUDINARY_API_SECRET="your_api_secret"
+FRONTEND_URL="http://localhost:3000"
 ```
 
-### Step 2: Initialize & Seed Backend
+Create a `.env.local` file in the `frontend/` directory:
+
+```env
+# frontend/.env.local
+NEXT_PUBLIC_API_URL="http://localhost:5000"
+```
+
+### 3. Spin Up Local Database
+From the root directory, start the PostgreSQL container:
+
+```bash
+docker-compose up -d
+```
+
+### 4. Initialize Backend
 ```bash
 cd backend
 npm install
+npx prisma generate
 npx prisma migrate dev --name init
-npx prisma db seed
+npm run seed     # Optional: Seed initial card settings and admin user
 npm run dev
 ```
-> The Fastify API server will start on **`http://localhost:5000`** with all endpoints registered under `/api`.
 
-### Step 3: Start Next.js Frontend
-In a new terminal:
+### 5. Initialize Frontend
+Open a new terminal window:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-> The Next.js Admin Portal will run on **`http://localhost:3000`**.
+
+Navigate to [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 🧪 Functional Verification
+## 🌍 Production Deployment
 
-1. **Card Settings & Assets (`/settings`)**
-   - Upload new Organisation Logo and Authorised Signature directly to Cloudinary (folder: `foe`).
-   - Configure default values: Trust Name, Subtitle, Registration No., Website URL, and Default Emergency Contact.
+This monorepo is configured for decoupled hosting using Render (Backend) and Vercel (Frontend), tied together by NeonDB (Serverless Postgres).
 
-2. **Member Registration (`/members/create`)**
-   - Auto-generated sequential Member ID is computed from the database (e.g. `0001`, `0002`).
-   - Upload passport photo (300 x 400 preview, validated <= 2 MB).
-   - Dynamic Blood Group dropdown populated from the master database table.
-   - On submission, automatically redirects to the ID card live preview.
+### Backend (Render)
+1.  Connect your repository to Render as a Web Service.
+2.  Set the **Root Directory** to `backend`.
+3.  **Build Command:** `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
+4.  **Start Command:** `npm run start` (or `node dist/index.js`)
+5.  Add all environment variables, using the NeonDB connection string for `DATABASE_URL`.
+6.  *Note:* A `/api/health` keep-alive endpoint is implemented to prevent Render free-tier cold starts.
 
-3. **Member Directory & Pagination (`/members`)**
-   - Displays members in descending order (`ORDER BY id DESC`), latest registrations first.
-   - Cursor-based pagination with "Load More Records".
-   - Filter tabs: **Active Members** and **Deleted / Archival Records**.
-   - Soft-delete marks record with timestamp and admin user; restore action reinstates the record.
-
-4. **Live Card Preview & High-Res PDF Export (`/members/[id]/preview`)**
-   - Pixel-perfect CR80 ratio render (Front and Back side-by-side).
-   - "Download ID Card (PDF)" generates a clean A4 landscape print-ready PDF.
-   - Remote images from Cloudinary are proxied via `/api/proxy-image` to guarantee untainted HTML5 canvas rendering without CORS errors.
-
----
-
-## 🔒 Security & Performance Features
-- **BigInt Serialization**: Fastify's reply serializer converts BigInt database primary keys to strings globally, preventing JSON serialization errors.
-- **Image Proxying**: `/api/proxy-image?url=...` prevents cross-origin canvas contamination during high-resolution PDF rendering.
-- **Soft Deletion**: Records preserve historical data using `deletedAt` and `deletedBy` fields without hard deletion.
+### Frontend (Vercel)
+1.  Import the repository into Vercel.
+2.  Set the **Root Directory** to `frontend`.
+3.  Vercel will auto-detect Next.js framework settings.
+4.  Set `NEXT_PUBLIC_API_URL` to your live Render backend URL (e.g., `https://your-api.onrender.com`). Do not include the trailing `/api` if handled in code.
+5.  Deploy.
+6.  Once deployed, update the backend's `FRONTEND_URL` environment variable to match your Vercel domain to secure CORS policies.
