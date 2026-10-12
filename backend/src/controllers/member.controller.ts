@@ -50,32 +50,82 @@ export async function getMembersHandler(
     Querystring: {
       cursor?: string;
       limit?: string;
-      status?: "active" | "deleted" | "all";
+      status?: string;
+      sortBy?: string;
+      sortOrder?: string;
       includeDeleted?: string;
+      search?: string;
     };
   }>,
   reply: FastifyReply
 ) {
   try {
-    const { cursor, limit, status, includeDeleted } = req.query;
+    const { cursor, limit, status, sortBy, sortOrder, includeDeleted, search } = req.query;
     const takeLimit = Math.min(limit ? parseInt(limit, 10) : 10, 50);
 
     const where: Record<string, unknown> = {};
 
-    if (includeDeleted === "true" || status === "all") {
+    const normalizedStatus = (status || "").toLowerCase();
+    if (includeDeleted === "true" || normalizedStatus === "all") {
       // Return all
-    } else if (status === "deleted") {
+    } else if (normalizedStatus === "deleted") {
       where.deletedAt = { not: null };
     } else {
       // Default: Active members
       where.deletedAt = null;
     }
 
+    // ViewScope restriction: If scope is OWN and not SUPERADMIN, restrict to createdById
+    if (req.user && req.user.role !== "SUPERADMIN" && req.user.viewScope === "OWN") {
+      where.createdById = req.user.id;
+    }
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      where.OR = [
+        { fullName: { contains: term, mode: "insensitive" } },
+        { memberId: { contains: term, mode: "insensitive" } },
+        { contactNumber: { contains: term, mode: "insensitive" } },
+        { emailId: { contains: term, mode: "insensitive" } },
+        { designation: { contains: term, mode: "insensitive" } },
+      ];
+    }
+
+    // Whitelist sort fields
+    const ALLOWED_SORT_FIELDS: Record<string, string> = {
+      createdat: "createdAt",
+      updatedat: "updatedAt",
+      fullname: "fullName",
+      memberid: "memberId",
+      designation: "designation",
+      dateofjoining: "dateOfJoining",
+      id: "id",
+    };
+
+    const requestedKey = (sortBy || "createdAt").toLowerCase().replace(/_/g, "");
+    const safeSortField = ALLOWED_SORT_FIELDS[requestedKey] || "createdAt";
+    const safeSortOrder = sortOrder?.toLowerCase() === "asc" ? "asc" : "desc";
+
+    const orderBy: Array<Record<string, string>> = [
+      { [safeSortField]: safeSortOrder },
+    ];
+    if (safeSortField !== "id") {
+      orderBy.push({ id: safeSortOrder });
+    }
+
     const queryOptions: Record<string, unknown> = {
       where,
       take: takeLimit + 1,
-      orderBy: { id: "desc" },
-      include: { bloodGroup: true },
+      orderBy,
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true, status: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true, status: true },
+        },
+      },
     };
 
     if (cursor) {
@@ -96,11 +146,10 @@ export async function getMembersHandler(
 
     return reply.status(200).send({
       success: true,
-      data: {
-        items,
-        nextCursor,
-        hasMore,
-      },
+      data: items,
+      items,
+      nextCursor,
+      hasMore,
     });
   } catch (error) {
     logger.error("Error retrieving members list:", error);
@@ -119,7 +168,15 @@ export async function getMemberByIdHandler(
     const { id } = req.params;
     const member = await prisma.member.findUnique({
       where: { id: BigInt(id) },
-      include: { bloodGroup: true },
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
     });
 
     if (!member) {
@@ -156,6 +213,7 @@ export async function createMemberHandler(
   try {
     const data = req.body;
     const memberId = await getNextMemberId();
+    const currentUserId = req.user?.id || null;
 
     const member = await prisma.member.create({
       data: {
@@ -177,8 +235,18 @@ export async function createMemberHandler(
         authorisedName: data.authorisedName,
         authorisedDesignation: data.authorisedDesignation,
         remarks: data.remarks || null,
+        createdById: currentUserId,
+        updatedById: currentUserId,
       },
-      include: { bloodGroup: true },
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
     });
 
     logger.info("Successfully created member: %s (ID: %s)", member.fullName, member.memberId);
@@ -202,11 +270,23 @@ export async function deleteMemberHandler(
 ) {
   try {
     const { id } = req.params;
+    const currentUserId = req.user?.id || null;
+
     const member = await prisma.member.update({
       where: { id: BigInt(id) },
       data: {
         deletedAt: new Date(),
-        deletedBy: "admin",
+        deletedBy: req.user?.name || "admin",
+        updatedById: currentUserId || undefined,
+      },
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
       },
     });
 
@@ -232,11 +312,23 @@ export async function restoreMemberHandler(
 ) {
   try {
     const { id } = req.params;
+    const currentUserId = req.user?.id || null;
+
     const member = await prisma.member.update({
       where: { id: BigInt(id) },
       data: {
         deletedAt: null,
         deletedBy: null,
+        updatedById: currentUserId || undefined,
+      },
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
       },
     });
 
@@ -360,10 +452,23 @@ export async function updateMemberHandler(
     if (data.authorisedDesignation !== undefined) updateData.authorisedDesignation = data.authorisedDesignation;
     if (data.remarks !== undefined) updateData.remarks = data.remarks;
 
+    const currentUserId = req.user?.id || null;
+    if (currentUserId) {
+      updateData.updatedById = currentUserId;
+    }
+
     const updated = await prisma.member.update({
       where: { id: BigInt(id) },
       data: updateData,
-      include: { bloodGroup: true },
+      include: {
+        bloodGroup: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        updatedBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
     });
 
     logger.info("Successfully updated member: %s (ID: %s)", updated.fullName, updated.memberId);
@@ -395,10 +500,15 @@ export async function bulkSoftDeleteMembersHandler(
       });
     }
 
+    const currentUserId = req.user?.id || null;
     const bigIntIds = ids.map((id: string) => BigInt(id));
     await prisma.member.updateMany({
       where: { id: { in: bigIntIds } },
-      data: { deletedAt: new Date(), deletedBy: "admin" },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: req.user?.name || "admin",
+        updatedById: currentUserId,
+      },
     });
 
     logger.info("Bulk soft-deleted %d members", ids.length);
@@ -429,10 +539,15 @@ export async function bulkRestoreMembersHandler(
       });
     }
 
+    const currentUserId = req.user?.id || null;
     const bigIntIds = ids.map((id: string) => BigInt(id));
     await prisma.member.updateMany({
       where: { id: { in: bigIntIds } },
-      data: { deletedAt: null, deletedBy: null },
+      data: {
+        deletedAt: null,
+        deletedBy: null,
+        updatedById: currentUserId,
+      },
     });
 
     logger.info("Bulk restored %d members", ids.length);

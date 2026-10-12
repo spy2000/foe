@@ -9,7 +9,8 @@ export const metadata: Metadata = {
     "Production ID Card Generation & Admin Portal for Friends of Education Charitable Trust",
 };
 
-import { SettingsProvider } from "@/context/SettingsContext";
+import Providers from "./providers";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function RootLayout({
   children,
@@ -25,13 +26,15 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-neutral-50/70 antialiased selection:bg-orange-500 selection:text-white">
-        <SettingsProvider>
+        <Providers>
           <Navbar />
-          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            {children}
-          </main>
+          <AuthGuard>
+            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+              {children}
+            </main>
+          </AuthGuard>
           <Toast />
-        </SettingsProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import { Download, Loader2 } from "lucide-react";
 import { showToast } from "./Toast";
 import { convertImageToBase64 } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface PDFExporterProps {
   frontElementId?: string;
@@ -49,7 +50,13 @@ export default function PDFExporter({
   memberName,
   buttonClassName,
 }: PDFExporterProps) {
+  const { user } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
+
+  // Return null if user lacks permission to download cards
+  if (!user?.canDownloadCard && user?.role !== "SUPERADMIN") {
+    return null;
+  }
 
   const handleDownloadPDF = async () => {
     const container =

@@ -17,7 +17,9 @@ export const memberBaseSchema = z
     dateOfJoining: z.string().min(1, "Date of joining is required"),
     contactNumber: z
       .string()
-      .regex(phoneRegex, "Contact number must be 10-15 digits"),
+      .regex(/^[6-9]\d{9}$/, "Must be a valid 10-digit Indian mobile number")
+      .optional()
+      .or(z.literal("")),
     emailId: z.string().email("Valid email address is required"),
     emergencyContactName: z
       .string()

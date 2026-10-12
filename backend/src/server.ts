@@ -4,6 +4,8 @@ dotenv.config();
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import cookie from "@fastify/cookie";
+import rateLimit from "@fastify/rate-limit";
 import { logger } from "./config/logger";
 import { corsOptions } from "./middlewares/cors";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -12,6 +14,8 @@ import { settingsRoutes } from "./routes/settings.routes";
 import { uploadRoutes } from "./routes/upload.routes";
 import { bloodGroupRoutes } from "./routes/bloodGroup.routes";
 import { healthRoutes } from "./routes/health.routes";
+import { authRoutes } from "./routes/auth.routes";
+import { userRoutes } from "./routes/user.routes";
 import { healthCheckHandler } from "./controllers/health.controller";
 
 export function createServer() {
@@ -70,6 +74,17 @@ async function startServer() {
     },
   });
 
+  // Register Cookie plugin for secure HttpOnly session tokens
+  await server.register(cookie, {
+    secret: process.env.COOKIE_SECRET || "foe_cookie_secret_key_2026_secure",
+    parseOptions: {},
+  });
+
+  // Register Rate Limiting plugin (per-route rate limiting enabled via authLimiter)
+  await server.register(rateLimit, {
+    global: false,
+  });
+
   // Healthcheck ping endpoint
   server.get("/health", healthCheckHandler);
 
@@ -77,6 +92,8 @@ async function startServer() {
   await server.register(
     async (api) => {
       await api.register(healthRoutes);
+      await api.register(authRoutes);
+      await api.register(userRoutes);
       await api.register(bloodGroupRoutes);
       await api.register(settingsRoutes);
       await api.register(memberRoutes);
