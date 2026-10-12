@@ -14,6 +14,8 @@ import {
 } from "../schemas/auth.schema";
 import { sendBrevoEmail } from "../lib/email";
 
+export { cookieOptions, isProduction } from "../services/auth.service";
+
 export async function loginHandler(
   req: FastifyRequest<{ Body: LoginInput }>,
   reply: FastifyReply
