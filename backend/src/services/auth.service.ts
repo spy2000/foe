@@ -11,6 +11,8 @@ const JWT_SECRET =
   process.env.JWT_SECRET || "foe_jwt_secret_super_key_2026_secure_random";
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "1d") as SignOptions["expiresIn"];
 
+export const isProduction = process.env.NODE_ENV === "production";
+
 export interface CookieOptions {
   httpOnly: boolean;
   secure: boolean;
@@ -19,13 +21,22 @@ export interface CookieOptions {
   maxAge: number;
 }
 
-export const getAuthCookieOptions = (): CookieOptions => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+export const cookieOptions: CookieOptions = {
+  httpOnly: true, // Prevents JS access (XSS protection)
+  secure: isProduction, // MUST be true in production (requires HTTPS)
+  sameSite: isProduction ? "none" : "lax", // 'none' enables cross-domain cookies (Vercel <-> Render)
   path: "/",
-  maxAge: 60 * 60 * 24, // 24 hours in seconds
-});
+  maxAge: 24 * 60 * 60, // 1 Day
+};
+
+export const clearCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  path: "/",
+};
+
+export const getAuthCookieOptions = (): CookieOptions => cookieOptions;
 
 export class AuthService {
   /**
@@ -75,20 +86,16 @@ export class AuthService {
    * Sets a secure HttpOnly cookie containing the JWT on the FastifyReply.
    */
   static setAuthCookie(reply: FastifyReply, token: string): void {
-    const options = getAuthCookieOptions();
-    reply.setCookie(AUTH_COOKIE_NAME, token, options);
+    reply.setCookie(AUTH_COOKIE_NAME, token, cookieOptions);
+    reply.setCookie("token", token, cookieOptions);
   }
 
   /**
    * Clears the authentication cookie from the FastifyReply.
    */
   static clearAuthCookie(reply: FastifyReply): void {
-    reply.clearCookie(AUTH_COOKIE_NAME, {
-      path: "/",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    reply.clearCookie(AUTH_COOKIE_NAME, clearCookieOptions);
+    reply.clearCookie("token", clearCookieOptions);
   }
 
   /**

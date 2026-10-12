@@ -7,8 +7,8 @@ import { SafeUser, UserPermissions } from "../types/auth";
  * Extracts the JWT token from HttpOnly cookie or Authorization Bearer header.
  */
 function extractToken(req: FastifyRequest): string | null {
-  // 1. Prioritize secure HttpOnly cookie
-  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME];
+  // 1. Prioritize secure HttpOnly cookie (support both AUTH_COOKIE_NAME and token)
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME] || req.cookies?.token;
   if (cookieToken) {
     return cookieToken;
   }
@@ -56,7 +56,6 @@ export async function requireAuth(
 
   if (isDeactivated || user?.status === UserStatus.DEACTIVATED) {
     AuthService.clearAuthCookie(reply);
-    reply.clearCookie("token");
     return reply.status(403).send({
       success: false,
       error: "Your account has been deactivated. Please contact the Superadmin.",
