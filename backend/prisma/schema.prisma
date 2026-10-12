@@ -7,6 +7,62 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  SUPERADMIN
+  ADMIN
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DEACTIVATED
+}
+
+enum ViewScope {
+  ALL
+  OWN
+}
+
+model User {
+  id                  String     @id @default(uuid())
+  email               String     @unique
+  name                String
+  contactNumber       String?    @map("contact_number")
+  passwordHash        String     @map("password_hash")
+  role                Role       @default(ADMIN)
+  status              UserStatus @default(INVITED)
+  forcePasswordChange Boolean    @default(true) @map("force_password_change")
+
+  // Permissions
+  canAddMember    Boolean   @default(true) @map("can_add_member")
+  canDownloadCard Boolean   @default(true) @map("can_download_card")
+  viewScope       ViewScope @default(ALL) @map("view_scope")
+
+  // Password Reset
+  resetPasswordToken   String?   @map("reset_password_token")
+  resetPasswordExpires DateTime? @map("reset_password_expires")
+
+  // Audit Relations
+  createdMembers Member[] @relation("MemberCreatedBy")
+  updatedMembers Member[] @relation("MemberUpdatedBy")
+
+  deletedAt DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model SystemSettings {
+  id              Int      @id @default(1)
+  lastKeepAliveAt DateTime @default(now()) @map("last_keep_alive_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
 model BloodGroup {
   id         Int       @id @default(autoincrement())
   bloodGroup String    @unique @map("blood_group") @db.VarChar(5)
@@ -22,31 +78,34 @@ model BloodGroup {
 }
 
 model Member {
-  id                           BigInt      @id @default(autoincrement())
-  memberId                     String      @unique @map("member_id") @db.VarChar(20)
-  registrationNo               String      @map("registration_no") @db.VarChar(50)
-  fullName                     String      @map("full_name") @db.VarChar(100)
-  designation                  String      @db.VarChar(100)
-  bloodGroupId                 Int         @map("blood_group_id")
-  bloodGroup                   BloodGroup  @relation(fields: [bloodGroupId], references: [id])
-  contactNumber                String      @map("contact_number") @db.VarChar(15)
-  emailId                      String      @map("email_id") @db.VarChar(100)
-  dateOfJoining                DateTime    @map("date_of_joining") @db.Date
-  emergencyContactName         String      @map("emergency_contact_name") @db.VarChar(100)
-  emergencyContactRelationship String      @map("emergency_contact_relationship") @db.VarChar(50)
-  emergencyContactNumber       String      @map("emergency_contact_number") @db.VarChar(15)
-  photoPath                    String      @map("photo_path") @db.VarChar(255)
-  issueDate                    DateTime    @map("issue_date") @db.Date
-  expiryDate                   DateTime    @map("expiry_date") @db.Date
-  memberStatus                 String      @default("Active") @map("member_status") @db.VarChar(20)
-  authorisedName               String      @map("authorised_name") @db.VarChar(100)
-  authorisedDesignation        String      @map("authorised_designation") @db.VarChar(100)
-  remarks                      String?     @db.Text
-  createdAt                    DateTime    @default(now()) @map("created_at")
-  updatedAt                    DateTime    @updatedAt @map("updated_at")
-  createdBy                    String      @default("admin") @map("created_by") @db.VarChar(50)
-  deletedAt                    DateTime?   @map("deleted_at")
-  deletedBy                    String?     @map("deleted_by") @db.VarChar(50)
+  id                           BigInt     @id @default(autoincrement())
+  memberId                     String     @unique @map("member_id") @db.VarChar(20)
+  registrationNo               String     @map("registration_no") @db.VarChar(50)
+  fullName                     String     @map("full_name") @db.VarChar(100)
+  designation                  String     @db.VarChar(100)
+  bloodGroupId                 Int        @map("blood_group_id")
+  bloodGroup                   BloodGroup @relation(fields: [bloodGroupId], references: [id])
+  contactNumber                String     @map("contact_number") @db.VarChar(15)
+  emailId                      String     @map("email_id") @db.VarChar(100)
+  dateOfJoining                DateTime   @map("date_of_joining") @db.Date
+  emergencyContactName         String     @map("emergency_contact_name") @db.VarChar(100)
+  emergencyContactRelationship String     @map("emergency_contact_relationship") @db.VarChar(50)
+  emergencyContactNumber       String     @map("emergency_contact_number") @db.VarChar(15)
+  photoPath                    String     @map("photo_path") @db.VarChar(255)
+  issueDate                    DateTime   @map("issue_date") @db.Date
+  expiryDate                   DateTime   @map("expiry_date") @db.Date
+  memberStatus                 String     @default("Active") @map("member_status") @db.VarChar(20)
+  authorisedName               String     @map("authorised_name") @db.VarChar(100)
+  authorisedDesignation        String     @map("authorised_designation") @db.VarChar(100)
+  remarks                      String?    @db.Text
+  createdAt                    DateTime   @default(now()) @map("created_at")
+  updatedAt                    DateTime   @updatedAt @map("updated_at")
+  createdById                  String?    @map("created_by_id")
+  createdBy                    User?      @relation("MemberCreatedBy", fields: [createdById], references: [id])
+  updatedById                  String?    @map("updated_by_id")
+  updatedBy                    User?      @relation("MemberUpdatedBy", fields: [updatedById], references: [id])
+  deletedAt                    DateTime?  @map("deleted_at")
+  deletedBy                    String?    @map("deleted_by") @db.VarChar(50)
 
   @@index([deletedAt, id(sort: Desc)])
   @@map("members")

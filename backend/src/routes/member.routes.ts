@@ -13,6 +13,7 @@ import {
   bulkPermanentDeleteMembersHandler,
 } from "../controllers/member.controller";
 import { validate } from "../middlewares/validate";
+import { optionalAuth, requireAddMemberPermission } from "../middlewares/auth.middleware";
 import {
   createMemberSchema,
   CreateMemberInput,
@@ -21,30 +22,70 @@ import {
 } from "../schemas/member.schema";
 
 export async function memberRoutes(fastify: FastifyInstance) {
+  // Populate req.user from auth token if present
+  fastify.addHook("preHandler", optionalAuth);
+
   fastify.get("/members/next-id", getNextMemberIdHandler);
   fastify.get("/members", getMembersHandler);
 
   // Bulk operation endpoints (registered before :id to prevent param collision)
-  fastify.post("/members/bulk-delete", bulkSoftDeleteMembersHandler);
-  fastify.post("/members/bulk-restore", bulkRestoreMembersHandler);
-  fastify.post("/members/bulk-permanent-delete", bulkPermanentDeleteMembersHandler);
+  fastify.post<{ Body: { ids: string[] } }>(
+    "/members/bulk-delete",
+    { preHandler: [requireAddMemberPermission] },
+    bulkSoftDeleteMembersHandler
+  );
+  fastify.post<{ Body: { ids: string[] } }>(
+    "/members/bulk-restore",
+    { preHandler: [requireAddMemberPermission] },
+    bulkRestoreMembersHandler
+  );
+  fastify.post<{ Body: { ids: string[] } }>(
+    "/members/bulk-permanent-delete",
+    { preHandler: [requireAddMemberPermission] },
+    bulkPermanentDeleteMembersHandler
+  );
 
   fastify.get("/members/:id", getMemberByIdHandler);
+
   fastify.post<{ Body: CreateMemberInput }>(
     "/members",
     {
-      preHandler: [validate({ body: createMemberSchema })],
+      preHandler: [requireAddMemberPermission, validate({ body: createMemberSchema })],
     },
     createMemberHandler
   );
+
   fastify.put<{ Params: { id: string }; Body: UpdateMemberInput }>(
     "/members/:id",
     {
-      preHandler: [validate({ body: updateMemberSchema })],
+      preHandler: [requireAddMemberPermission, validate({ body: updateMemberSchema })],
     },
     updateMemberHandler
   );
-  fastify.delete("/members/:id", deleteMemberHandler);
-  fastify.patch("/members/:id/restore", restoreMemberHandler);
-  fastify.delete("/members/:id/permanent", permanentDeleteMemberHandler);
+
+  fastify.patch<{ Params: { id: string }; Body: UpdateMemberInput }>(
+    "/members/:id",
+    {
+      preHandler: [requireAddMemberPermission, validate({ body: updateMemberSchema })],
+    },
+    updateMemberHandler
+  );
+
+  fastify.delete<{ Params: { id: string } }>(
+    "/members/:id",
+    { preHandler: [requireAddMemberPermission] },
+    deleteMemberHandler
+  );
+
+  fastify.patch<{ Params: { id: string } }>(
+    "/members/:id/restore",
+    { preHandler: [requireAddMemberPermission] },
+    restoreMemberHandler
+  );
+
+  fastify.delete<{ Params: { id: string } }>(
+    "/members/:id/permanent",
+    { preHandler: [requireAddMemberPermission] },
+    permanentDeleteMemberHandler
+  );
 }

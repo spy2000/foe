@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Tag,
   CreditCard,
@@ -51,6 +52,7 @@ const RELATIONSHIP_OPTIONS: SelectOption[] = [
 
 export default function MemberForm({ mode, initialMember, memberId }: MemberFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { settings: globalSettings } = useCardSettings();
 
   // Independent loading states
@@ -158,13 +160,18 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
 
         if (bloodGroupsRes.status === "fulfilled" && bloodGroupsRes.value) {
           const val = bloodGroupsRes.value;
-          const bgData = (val as any).data || (Array.isArray(val) ? val : []);
+          const bgData =
+            typeof val === "object" && val !== null && "data" in val && Array.isArray((val as { data: unknown }).data)
+              ? (val as { data: unknown[] }).data
+              : Array.isArray(val)
+              ? val
+              : [];
           if (Array.isArray(bgData) && bgData.length > 0) {
-            const formatted: BloodGroup[] = bgData.map((item: any, idx: number) => {
+            const formatted: BloodGroup[] = bgData.map((item: unknown, idx: number) => {
               if (typeof item === "string") {
                 return { id: idx + 1, bloodGroup: item, isActive: true };
               }
-              return item;
+              return item as BloodGroup;
             });
             setBloodGroups(formatted);
           } else {
@@ -177,7 +184,11 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
 
         if (!isEdit) {
           if (nextIdRes.status === "fulfilled" && nextIdRes.value) {
-            const val = nextIdRes.value as any;
+            const val = nextIdRes.value as {
+              data?: { nextMemberId?: string };
+              nextMemberId?: string;
+              nextId?: string;
+            };
             const nextId = val?.data?.nextMemberId || val?.nextMemberId || val?.nextId || "0001";
             setNextMemberId(nextId);
           } else {
@@ -332,6 +343,22 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
             URL.revokeObjectURL(stagedPhoto.previewUrl);
           }
           setStagedPhoto(null);
+
+          // Optimistically update React Query cache across infinite query keys
+          queryClient.setQueriesData({ queryKey: ["members"] }, (oldData: unknown) => {
+            if (!oldData || typeof oldData !== "object" || !("pages" in oldData)) return oldData;
+            const castOld = oldData as { pages: Array<{ data?: Member[]; items?: Member[] }> };
+            return {
+              ...castOld,
+              pages: castOld.pages.map((page) => ({
+                ...page,
+                data: (page.data || []).map((m: Member) => (m.id === res.data.id ? res.data : m)),
+                items: (page.items || []).map((m: Member) => (m.id === res.data.id ? res.data : m)),
+              })),
+            };
+          });
+          queryClient.invalidateQueries({ queryKey: ["members"] });
+
           showToast("Member updated successfully!", "success");
           router.push(`/members/${memberId}/preview`);
         }
@@ -342,6 +369,22 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
             URL.revokeObjectURL(stagedPhoto.previewUrl);
           }
           setStagedPhoto(null);
+
+          // Optimistically prepend newly created member to first page of cache
+          queryClient.setQueriesData({ queryKey: ["members"] }, (oldData: unknown) => {
+            if (!oldData || typeof oldData !== "object" || !("pages" in oldData)) return oldData;
+            const castOld = oldData as { pages: Array<{ data?: Member[]; items?: Member[] }> };
+            if (castOld.pages.length === 0) return oldData;
+            const newPages = [...castOld.pages];
+            newPages[0] = {
+              ...newPages[0],
+              data: [res.data, ...(newPages[0].data || [])],
+              items: [res.data, ...(newPages[0].items || [])],
+            };
+            return { ...castOld, pages: newPages };
+          });
+          queryClient.invalidateQueries({ queryKey: ["members"] });
+
           showToast("Member registered successfully!", "success");
           router.push(`/members/${res.data.id}/preview`);
         }
@@ -584,8 +627,10 @@ export default function MemberForm({ mode, initialMember, memberId }: MemberForm
                       <Phone className="h-4 w-4" />
                     </div>
                     <input
+                      type="text"
+                      maxLength={10}
                       {...register("contactNumber")}
-                      placeholder="Enter mobile number (+91...)"
+                      placeholder="Enter 10-digit mobile number"
                       className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2 text-xs font-medium text-gray-900 focus:border-[#F15A24] focus:outline-none focus:ring-2 focus:ring-orange-100"
                     />
                   </div>

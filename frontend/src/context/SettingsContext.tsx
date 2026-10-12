@@ -41,12 +41,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const fetchSettings = useCallback(async () => {
     try {
       const res = await api.getSettings();
-      if (res.success && res.data) {
+      if (res && res.data) {
         setSettings(res.data);
+      } else if (res && (res as unknown as CardSettings).trustName) {
+        setSettings(res as unknown as CardSettings);
+      } else {
+        setSettings(DEFAULT_CARD_SETTINGS);
       }
-    } catch (err) {
-      console.warn("Failed to load settings from server, using default fallback:", err);
-      setSettings((prev) => prev || DEFAULT_CARD_SETTINGS);
+    } catch {
+      console.warn("[SettingsContext] Failed to load settings from server. Using defaults.");
+      // Do NOT throw the error here. Just let it use the default fallback state.
+      setSettings(DEFAULT_CARD_SETTINGS);
     } finally {
       setLoading(false);
     }

@@ -65,6 +65,50 @@ export interface MembersResponse {
   hasMore: boolean;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  contactNumber?: string | null;
+  role: "SUPERADMIN" | "ADMIN";
+  status: "INVITED" | "ACTIVE" | "DEACTIVATED";
+  forcePasswordChange: boolean;
+  canAddMember: boolean;
+  canDownloadCard: boolean;
+  viewScope: "ALL" | "OWN";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message?: string;
+  requiresPasswordChange?: boolean;
+  data: {
+    user: AuthUser;
+    requiresPasswordChange?: boolean;
+  };
+}
+
+export interface InviteUserData {
+  email: string;
+  name: string;
+  contactNumber?: string | null;
+  role?: "SUPERADMIN" | "ADMIN";
+  canAddMember?: boolean;
+  canDownloadCard?: boolean;
+  viewScope?: "ALL" | "OWN";
+}
+
+export interface InviteUserResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: AuthUser;
+    temporaryPassword: string;
+  };
+}
+
 export class ApiClient {
   public baseUrl: string;
 
@@ -97,13 +141,25 @@ export class ApiClient {
     try {
       const res = await fetch(url, {
         ...options,
+        credentials: "include", // CRITICAL: Required to send/receive secure HttpOnly cookies
         headers,
         body,
       });
 
       if (!res.ok) {
+        // Handle graceful 401 for initial load
+        if (res.status === 401 && cleanEndpoint === "/auth/me") {
+          return null as T;
+        }
+
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.message || errBody.error || `HTTP ${res.status}: ${res.statusText}`);
+        const errorMessage =
+          errBody.error || errBody.message || `HTTP ${res.status}: ${res.statusText}`;
+
+        // Create a custom error object that includes the status code
+        const error = new Error(errorMessage);
+        (error as Error & { status?: number }).status = res.status;
+        throw error;
       }
 
       // Handle 204 No Content gracefully
@@ -111,10 +167,21 @@ export class ApiClient {
         return {} as T;
       }
 
-      return await res.json();
-    } catch (error: any) {
-      console.error(`[API Client] Error fetching ${cleanEndpoint}:`, error.message);
-      throw error; // Re-throw for specific component handling
+      return (await res.json()) as T;
+    } catch (error: unknown) {
+      const err = error as Error & { status?: number };
+
+      // Swallow 401s specifically for the initial session check
+      if (err.status === 401 && cleanEndpoint === "/auth/me") {
+        return null as T;
+      }
+
+      // Only log to console if it's a 5xx error or a network failure (no status)
+      if (!err.status || err.status >= 500) {
+        console.error(`[API Client] Error fetching ${cleanEndpoint}:`, err.message);
+      }
+
+      throw err; // Always re-throw so the component can show a toast
     }
   }
 
@@ -172,20 +239,164 @@ export class ApiClient {
     return this.get("/members/next-id");
   }
 
+  // ================= Auth Methods =================
+  async login(data: { email: string; password: string }): Promise<LoginResponse> {
+    return this.post("/auth/login", data);
+  }
+
+  async updatePassword(data: {
+    oldPassword?: string;
+    newPassword: string;
+    confirmPassword?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    return this.post("/auth/update-password", data);
+  }
+
+  async getMe(): Promise<{ success: boolean; data: AuthUser } | null> {
+    return this.get("/auth/me");
+  }
+
+  async changePassword(data: {
+    currentPassword?: string;
+    newPassword: string;
+  }): Promise<{ success: boolean; message: string }> {
+    return this.patch("/auth/change-password", data);
+  }
+
+  async logout(): Promise<{ success: boolean; message: string }> {
+    return this.post("/auth/logout");
+  }
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    return this.post("/auth/forgot-password", { email });
+  }
+
+  async resetPassword(data: {
+    token: string;
+    newPassword: string;
+  }): Promise<{ success: boolean; message: string }> {
+    return this.post("/auth/reset-password", data);
+  }
+
+  // ================= User Management Methods (Superadmin) =================
+  async getUsers(params?: {
+    cursor?: string;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc" | string;
+  }): Promise<{
+    success: boolean;
+    data: AuthUser[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+  }> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set("cursor", params.cursor);
+    if (params?.limit) query.set("limit", params.limit.toString());
+    if (params?.search) query.set("search", params.search);
+    if (params?.sortBy) query.set("sortBy", params.sortBy);
+    if (params?.sortOrder) query.set("sortOrder", params.sortOrder);
+    const qs = query.toString();
+    return this.get(`/users${qs ? `?${qs}` : ""}`);
+  }
+
+  async inviteUser(data: InviteUserData): Promise<InviteUserResponse> {
+    return this.post("/users/invite", data);
+  }
+
+  async updateUserPermissions(
+    id: string,
+    data: {
+      canAddMember?: boolean;
+      canDownloadCard?: boolean;
+      viewScope?: "ALL" | "OWN";
+    }
+  ): Promise<{ success: boolean; data: AuthUser }> {
+    return this.patch(`/users/${id}/permissions`, data);
+  }
+
+  async updateUserStatus(
+    id: string,
+    status: "ACTIVE" | "DEACTIVATED"
+  ): Promise<{ success: boolean; data: AuthUser }> {
+    return this.patch(`/users/${id}/status`, { status });
+  }
+
+  async updateUserRole(
+    id: string,
+    role: "SUPERADMIN" | "ADMIN"
+  ): Promise<{ success: boolean; data: AuthUser }> {
+    return this.patch(`/users/${id}/role`, { role });
+  }
+
+  async updateUser(
+    id: string,
+    data: {
+      name?: string;
+      contactNumber?: string | null;
+      role?: "SUPERADMIN" | "ADMIN";
+      canAddMember?: boolean;
+      canDownloadCard?: boolean;
+      viewScope?: "ALL" | "OWN";
+      status?: "ACTIVE" | "DEACTIVATED" | "INVITED";
+    }
+  ): Promise<{ success: boolean; data: AuthUser; message?: string }> {
+    return this.patch(`/users/${id}`, data);
+  }
+
+  async deleteUser(id: string): Promise<{ success: boolean; message: string }> {
+    return this.delete(`/users/${id}`);
+  }
+
+  async bulkDeleteUsers(
+    ids: string[]
+  ): Promise<{ success: boolean; message: string; count: number }> {
+    return this.post("/users/bulk-delete", { ids });
+  }
+
+  // ================= Member Methods =================
   async getMembers(params?: {
     cursor?: string;
     limit?: number;
-    status?: "active" | "deleted" | "all";
+    status?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc" | string;
     includeDeleted?: boolean;
-  }): Promise<{ success: boolean; data: MembersResponse }> {
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    data: Member[];
+    items: Member[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }> {
     const query = new URLSearchParams();
     if (params?.cursor) query.set("cursor", params.cursor);
     if (params?.limit) query.set("limit", params.limit.toString());
     if (params?.status) query.set("status", params.status);
+    if (params?.sortBy) query.set("sortBy", params.sortBy);
+    if (params?.sortOrder) query.set("sortOrder", params.sortOrder);
     if (params?.includeDeleted) query.set("includeDeleted", "true");
+    if (params?.search) query.set("search", params.search);
 
     const qs = query.toString();
-    return this.get(`/members${qs ? `?${qs}` : ""}`);
+    const res = await this.get<{
+      success: boolean;
+      data: Member[];
+      items?: Member[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }>(`/members${qs ? `?${qs}` : ""}`);
+
+    const items = Array.isArray(res.data) ? res.data : (res.items || []);
+    return {
+      success: res.success,
+      data: items,
+      items,
+      nextCursor: res.nextCursor,
+      hasMore: res.hasMore,
+    };
   }
 
   async getMemberById(id: string): Promise<{

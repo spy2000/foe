@@ -9,12 +9,14 @@ import CardPreviewFront from "@/components/CardPreviewFront";
 import CardPreviewBack from "@/components/CardPreviewBack";
 import PDFExporter from "@/components/PDFExporter";
 import SkeletonCard from "@/components/skeletons/SkeletonCard";
+import { useAuth } from "@/context/AuthContext";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default function MemberPreviewPage({ params }: PageProps) {
+  const { user } = useAuth();
   const resolvedParams = use(params);
   const { id } = resolvedParams;
 
@@ -84,7 +86,7 @@ export default function MemberPreviewPage({ params }: PageProps) {
           <Link
             href="/members"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-xs hover:bg-gray-50 hover:text-gray-900 transition-all shrink-0"
-            title="Back to Member Directory"
+            aria-label="Back to Member Directory"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -105,21 +107,24 @@ export default function MemberPreviewPage({ params }: PageProps) {
 
         {/* Action Buttons: Edit Member & PDF Download */}
         <div className="flex w-full sm:w-auto items-center justify-center gap-3">
-          <Link
-            href={`/members/${member.id}/edit`}
-            className="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white shadow-sm hover:bg-gray-50 text-sm font-medium whitespace-nowrap transition-colors"
-            title="Edit Member Details"
-          >
-            <Pencil className="w-4 h-4 shrink-0 text-[#F15A24]" />
-            <span>Edit Member</span>
-          </Link>
+          {(user?.canAddMember || user?.role === "SUPERADMIN") && (
+            <Link
+              href={`/members/${member.id}/edit`}
+              className="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white shadow-sm hover:bg-gray-50 text-sm font-medium whitespace-nowrap transition-colors"
+            >
+              <Pencil className="w-4 h-4 shrink-0 text-[#F15A24]" />
+              <span>Edit Member</span>
+            </Link>
+          )}
 
-          <PDFExporter
-            containerId="pdf-capture-stage"
-            memberId={member.memberId}
-            memberName={member.fullName}
-            buttonClassName="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-white bg-[#F15A24] shadow-sm hover:bg-[#d94815] text-sm font-medium whitespace-nowrap transition-colors cursor-pointer"
-          />
+          {(user?.canDownloadCard || user?.role === "SUPERADMIN") && (
+            <PDFExporter
+              containerId="pdf-capture-stage"
+              memberId={member.memberId}
+              memberName={member.fullName}
+              buttonClassName="flex-1 sm:flex-initial inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg text-white bg-[#F15A24] shadow-sm hover:bg-[#d94815] text-sm font-medium whitespace-nowrap transition-colors cursor-pointer"
+            />
+          )}
         </div>
       </div>
 

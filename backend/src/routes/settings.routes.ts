@@ -15,4 +15,11 @@ export async function settingsRoutes(fastify: FastifyInstance) {
     },
     updateSettingsHandler
   );
+  fastify.patch<{ Body: UpdateSettingsInput }>(
+    "/settings",
+    {
+      preHandler: [validate({ body: updateSettingsSchema })],
+    },
+    updateSettingsHandler
+  );
 }
